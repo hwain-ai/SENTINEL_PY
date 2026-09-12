@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "sentinel-backend-lock-v1",
+  "backendName": "mutmut",
+  "backendVersion": "3.7.0",
+  "wheelSha256": "1d2f9a1bfa4a474b2213df6b17223150b492bf4a85af0eda4fb322297337fb32",
+  "moduleFileCount": 20,
+  "moduleTreeSha256": "a1ff46257a341fd1b0d4764e2affdf7e8368fb085b5f913de240593d9b7bec44",
+  "operatorInventory": [
+    "libcst._nodes.expression.BaseNumber|mutmut.mutation.mutators.operator_number",
+    "libcst._nodes.expression.BaseString|mutmut.mutation.mutators.operator_string",
+    "libcst._nodes.expression.Name|mutmut.mutation.mutators.operator_name",
+    "libcst._nodes.statement.Assign|mutmut.mutation.mutators.operator_assignment",
+    "libcst._nodes.statement.AnnAssign|mutmut.mutation.mutators.operator_assignment",
+    "libcst._nodes.statement.AugAssign|mutmut.mutation.mutators.operator_augmented_assignment",
+    "libcst._nodes.expression.UnaryOperation|mutmut.mutation.mutators.operator_remove_unary_ops",
+    "libcst._nodes.expression.Call|mutmut.mutation.mutators.operator_dict_arguments",
+    "libcst._nodes.expression.Call|mutmut.mutation.mutators.operator_arg_removal",
+    "libcst._nodes.expression.Call|mutmut.mutation.mutators.operator_symmetric_string_methods_swap",
+    "libcst._nodes.expression.Call|mutmut.mutation.mutators.operator_unsymmetrical_string_methods_swap",
+    "libcst._nodes.expression.Lambda|mutmut.mutation.mutators.operator_lambda",
+    "libcst._nodes.base.CSTNode|mutmut.mutation.mutators.operator_keywords",
+    "libcst._nodes.base.CSTNode|mutmut.mutation.mutators.operator_swap_op",
+    "libcst._nodes.statement.Match|mutmut.mutation.mutators.operator_match"
+  ],
+  "operatorInventorySha256": "374bc7d5c4e621e0470fe392abb7f1e649141e1142c2609a20386dee78813c59",
+  "mutationDomain": "python-function-and-method-body-v1",
+  "rawStateMapVersion": "mutmut-3.7.0-raw-state-v2",
+  "killConfirmationPolicy": "clean-control+typed-assertion+matching-replay-v1",
+  "isolationMode": "disposable-project-snapshot-v1"
+}

@@ -1,0 +1,28 @@
+[project]
+name = "sentinel-py"
+version = "0.1.0"
+description = "Native Python callable CRAP analysis core"
+requires-python = "==3.12.13"
+dependencies = [
+    "coverage==7.16.0",
+    "mutmut==3.7.0",
+]
+
+[project.scripts]
+sentinel-py = "sentinel_py.cli:main"
+
+[build-system]
+requires = ["uv_build==0.12.9"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest==9.1.1",
+]
+
+[tool.uv]
+required-version = "==0.12.9"
+
+[tool.pytest.ini_options]
+cache_dir = ".toolchain/pytest-cache"
+testpaths = ["tests"]

@@ -1,5 +1,37 @@
 {
   "repository": "SENTINEL_PY",
-  "status": "bootstrap-pending",
-  "toolchains": {}
+  "status": "locked",
+  "toolchains": {
+    "python": {
+      "vendor": "Astral python-build-standalone",
+      "version": "3.12.13",
+      "platform": "linux-x86_64-gnu",
+      "release": "20260807",
+      "archiveUrl": "https://github.com/astral-sh/python-build-standalone/releases/download/20260807/cpython-3.12.13%2B20260807-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz",
+      "archiveSize": 34163738,
+      "archiveSha256": "506191be3ee7bd190a8834dcdc1b3bc70aab50608deccc711935aa007239cabd",
+      "archiveRoot": "python",
+      "installDirectory": "python-3.12.13",
+      "binaryRelativePath": "bin/python3.12",
+      "binarySha256": "021044895e95be79dc2f110367607e684119afbc8ce75f6f0eec94844e0acec7",
+      "versionOutput": "Python 3.12.13",
+      "installedTreeSha256": "c4b77b84ef44bf6390eef79e4a9d7a74bf50241e9cebb3fc8cb47d4ce21c3e83",
+      "status": "locked"
+    },
+    "uv": {
+      "vendor": "Astral uv",
+      "version": "0.12.9",
+      "platform": "linux-x86_64-gnu",
+      "archiveUrl": "https://github.com/astral-sh/uv/releases/download/0.12.9/uv-x86_64-unknown-linux-gnu.tar.gz",
+      "archiveSize": 19423276,
+      "archiveSha256": "ec7a99cd05e0cd7f80243f135ce1361c76835cb0ee60055d14d20eba8eba1460",
+      "archiveRoot": "uv-x86_64-unknown-linux-gnu",
+      "installDirectory": "uv-0.12.9-linux-x86_64",
+      "binaryRelativePath": "uv",
+      "binarySha256": "671793498fe0a545432e2524b6691ffb9eea4540d9fda43ca2f978df2dbf8426",
+      "versionOutput": "uv 0.12.9 (x86_64-unknown-linux-gnu)",
+      "installedTreeSha256": "6575bd12eb626c516a696da81d001526ed1a012e5a43b7b6aa33bd0abaa54c0b",
+      "status": "locked"
+    }
+  }
 }
