@@ -12,8 +12,9 @@ SENTINEL_PY의 구현 상태와 변경 이유를 찾는 문서 시작점입니�
 
 CRAP 상한과 변이 최소 kill 비율을 명령 인자로 받고, 통합 SENTINEL이 부르는 어댑터(`sentinel-tool/`)를 갖췄습니다. 실제 공개 프로젝트에서 결과 저장 오류가 해소됐고 품질 기준 미달 결과와 변이 567개의 상세 기록을 회수했습니다. 원래 빌드·기본 테스트·원본 보존·정리도 확인했습니다. 현재 원본 mutmut의 직접 비교 실행은 진행 중이며, 결과 대조·통합 연결·설치 플러그인 검증은 남았습니다.
 
-[최신 실제 검증 기록](../../docs/references/sentinel-python-native-validation.md)에서 근거를, [사용·시험 안내](../README.md)에서 역할과 실행 방법을 확인합니다.
+[최신 실제 검증 기록](sentinel-python-native-validation.md)에서 근거를, [사용·시험 안내](../README.md)에서 역할과 실행 방법을 확인합니다.
 
 ## 운영 기록
 
+* [실제 프로젝트 검증 기록](sentinel-python-native-validation.md) - 고정 패키지·오프라인 설치 검증, 공개 프로젝트 ItsDangerous 검사와 직접 mutmut 대조
 * [변경 기록](log.md) - 문서 번들의 생성과 변경 내역

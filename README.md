@@ -5,7 +5,7 @@ Python 프로젝트의 복잡도·테스트 실행 범위·변이 검사 결과�
 - 구현된 범위: 명령 실행, coverage·mutmut 도구 연결, 품질 판정과 실행 증거 기록.
 - 현재 작업: 실제 공개 프로젝트의 검사 결과를 회수했고, 별도 사본에서 원본 mutmut의 직접 비교 실행을 진행 중입니다. 새 비교 결과는 아직 없습니다.
 - 통합 연결: `sentinel-tool/` 폴더의 어댑터가 통합 SENTINEL의 도구 요청(표준입력 JSON)을 받아 이 검사기의 `check`를 실행하고 응답 JSON 하나만 표준출력에 씁니다. `sentinel setup --language python`이 `sentinel-tool/setup.sh`로 Python·uv·의존성을 준비한 뒤 이 어댑터를 묶음으로 설치합니다.
-- 미완료 범위: 실제 도구 비교, 설치 플러그인의 호스트 검증. [최신 검증 기록](../docs/references/sentinel-python-native-validation.md)을 기준으로 확인합니다.
+- 미완료 범위: 실제 도구 비교, 설치 플러그인의 호스트 검증. [최신 검증 기록](docs/sentinel-python-native-validation.md)을 기준으로 확인합니다.
 
 ## 역할
 
@@ -45,4 +45,4 @@ ItsDangerous 2.2.0의 실제 재검증에서 빌드와 기본 테스트 297개 �
 
 ## 설계 근거
 
-원본 작업공간 설계 문서: `docs/design-docs/2026-08-native-quality-tools.md`
+원본 작업공간 설계 문서: [2026-08-native-quality-tools.md](https://github.com/hwain-hwang/SENTINEL/blob/main/docs/design-docs/2026-08-native-quality-tools.md) (SENTINEL 저장소)
