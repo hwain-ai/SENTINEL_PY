@@ -4,14 +4,14 @@ updated: 2026-09-13
 status: in-progress
 owner: Codex
 related:
-  - https://github.com/hwain-hwang/SENTINEL/blob/main/docs/exec-plans/active/2026-09-sentinel-unified-entry.md
+  - https://github.com/hwain-ai/SENTINEL/blob/main/docs/exec-plans/active/2026-09-sentinel-unified-entry.md
 ---
 
 # Python 고정 패키지·오프라인 설치 검증
 
 2026-09-13에 새 사본(ItsDangerous 2.2.0, commit 096c8d42545d3b68ea21a4f890fb2b2d8979c0bd)에서 Python 검사기의 엄격 검사와 원본 mutmut 3.7.0 직접 실행을 같은 조건으로 돌려 변이 567개의 집계를 대조했다. 세 상태가 모두 맞아떨어졌고(아래 표), 검사 결과는 품질 기준 미달인 종료 2/qualityFailed다. 통합 명령(`sentinel setup --language python --python-requirements`)으로 같은 프로젝트를 준비하는 경로도 이번에 확인했다.
 
-이 기록은 [실행 계획 Task 2c·2d](https://github.com/hwain-hwang/SENTINEL/blob/main/docs/exec-plans/active/2026-09-sentinel-unified-entry.md)의 준비 단계다. 가상환경은 패키지를 별도로 설치하는 장소이지 파일·네트워크 접근을 막는 보안 경계가 아니다. 아래 최초 호스트 준비에서는 원래 저장소에 접근할 수 있었고 모듈 검색 경로만 분리했다. 이후 컨테이너 설치에서는 SDK·설치 입력만 읽기 전용으로 연결했으며, 두 단계의 근거를 구분한다.
+이 기록은 [실행 계획 Task 2c·2d](https://github.com/hwain-ai/SENTINEL/blob/main/docs/exec-plans/active/2026-09-sentinel-unified-entry.md)의 준비 단계다. 가상환경은 패키지를 별도로 설치하는 장소이지 파일·네트워크 접근을 막는 보안 경계가 아니다. 아래 최초 호스트 준비에서는 원래 저장소에 접근할 수 있었고 모듈 검색 경로만 분리했다. 이후 컨테이너 설치에서는 SDK·설치 입력만 읽기 전용으로 연결했으며, 두 단계의 근거를 구분한다.
 
 ## 현재: 원본 mutmut 직접 실행과의 대조 결과(2026-09-13)
 
@@ -256,7 +256,7 @@ Python의 내부 파일 별칭 1,048개는 원래 경로에 대상과 같은 내
 1. 완료: 내장 모듈 진단 수정과 독립 v3 승인 후 새 컨테이너에서 고정 SDK 버전·표준 라이브러리·빈 가상환경, 종료 뒤 입력 보존·회수를 확인했다. 상세 근거는 아래 후속 실행 기록을 따른다.
 2. 완료: 실행 환경·검사기 wheel·의존성 wheel을 읽기 전용으로 연결하고, 제한된 임시 공간에 새 가상환경을 만들어 설치했다. 다음에는 공개 프로젝트 전체 소스와 별도 빌드·시험 도구도 같은 경계로 연결한다. 현재 검사기는 자식 실행의 환경 변수를 정리하므로 임의 모듈 검색 경로만 추가하는 방법으로 설치를 대신하지 않는다. 이번 호스트의 임시 절대 경로를 공개 연결 도구에 넣지 않는다.
 3. 원래 빌드·전체 시험297개 두 번의 기준 결과와 SENTINEL의 coverage·mutation·결과 기록을 비교하고 Python 전용 격리·중단·복구를 확인한다. 원본 전체 파일의 역할 분류는 기존 규칙과 대조하며 문서 설정 파일을 임의로 제외하지 않는다. 합성 doctor 입력은 이 비교 대상이 아니다.
-4. 통합 명령의 입력·시간 예산·정리 책임을 연결하고 운영 승인 뒤 Codex·Claude Code 설치 플러그인에 연결한다. 공통 부모의 직접 실행·정리 책임은 후속 [Go 통합 연결](https://github.com/hwain-hwang/SENTINEL_GO/blob/main/docs/sentinel-go-native-validation.md#설치된-통합-명령의-go-연결-검증)에서 검증했으며 Python 연결은 아직 미완료다. 과거 [실행 경계 검토](https://github.com/hwain-hwang/SENTINEL/blob/main/docs/references/sentinel-native-connection-boundary.md)의 미결정 상태를 현재 공통 구현의 부재로 해석하지 않는다. 2026-09-10 사용자가 부모 직접 관리와 Java·Python의 공식 Maven Central·PyPI 최초 준비를 승인했으며 더 이상 답변 대기가 아니다.
+4. 통합 명령의 입력·시간 예산·정리 책임을 연결하고 운영 승인 뒤 Codex·Claude Code 설치 플러그인에 연결한다. 공통 부모의 직접 실행·정리 책임은 후속 [Go 통합 연결](https://github.com/hwain-ai/SENTINEL_GO/blob/main/docs/sentinel-go-native-validation.md#설치된-통합-명령의-go-연결-검증)에서 검증했으며 Python 연결은 아직 미완료다. 과거 [실행 경계 검토](https://github.com/hwain-ai/SENTINEL/blob/main/docs/references/sentinel-native-connection-boundary.md)의 미결정 상태를 현재 공통 구현의 부재로 해석하지 않는다. 2026-09-10 사용자가 부모 직접 관리와 Java·Python의 공식 Maven Central·PyPI 최초 준비를 승인했으며 더 이상 답변 대기가 아니다.
 
 ## SDK 실제 후속 실행 완료
 

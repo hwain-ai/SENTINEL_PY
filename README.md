@@ -45,4 +45,4 @@ ItsDangerous 2.2.0의 실제 재검증에서 빌드와 기본 테스트 297개 �
 
 ## 설계 근거
 
-원본 작업공간 설계 문서: [2026-08-native-quality-tools.md](https://github.com/hwain-hwang/SENTINEL/blob/main/docs/design-docs/2026-08-native-quality-tools.md) (SENTINEL 저장소)
+원본 작업공간 설계 문서: [2026-08-native-quality-tools.md](https://github.com/hwain-ai/SENTINEL/blob/main/docs/design-docs/2026-08-native-quality-tools.md) (SENTINEL 저장소)
