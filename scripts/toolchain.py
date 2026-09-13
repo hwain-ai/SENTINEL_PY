@@ -250,8 +250,10 @@ def _verify_installed(tool: str, entry: Dict[str, Any], environment: Dict[str, s
         raise fail(f"verified local {tool} tree is missing")
     toolchain_lock._verify_tree(entry, home)
     binary = _verified_binary(tool, home / entry["binaryRelativePath"], entry["binarySha256"])
-    if check_version and _version_output(binary, environment) != entry["versionOutput"]:
-        raise fail(f"{tool} version output mismatch")
+    if check_version:
+        observed = _version_output(binary, environment)
+        if observed != entry["versionOutput"]:
+            raise fail(f"{tool} version output mismatch: expected {entry['versionOutput']!r}, got {observed!r}")
     return binary
 
 
