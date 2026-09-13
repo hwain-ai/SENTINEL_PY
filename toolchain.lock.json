@@ -89,7 +89,7 @@
           "installDirectory": "uv-0.12.9-darwin-x86_64",
           "binaryRelativePath": "uv",
           "binarySha256": "935ac2592d1f6975571fc332b02527049fc4c4fc3604917a9936b2cf329aa821",
-          "versionOutput": "uv 0.12.9 (x86_64-apple-darwin)",
+          "versionOutput": "uv 0.12.9 (9f9286029 2026-09-01 x86_64-apple-darwin)",
           "installedTreeSha256": "9d2c13f58c1a4d3689173e74ba6e9e9a6fbd7cd63488f3870d3afc30dd5a2434"
         },
         "darwin-aarch64": {
@@ -100,7 +100,7 @@
           "installDirectory": "uv-0.12.9-darwin-aarch64",
           "binaryRelativePath": "uv",
           "binarySha256": "5e2e4133be3e61a25f819b95f6d6bb38c61fb3062eddf3e0857bb72fa3c69205",
-          "versionOutput": "uv 0.12.9 (aarch64-apple-darwin)",
+          "versionOutput": "uv 0.12.9 (9f9286029 2026-09-01 aarch64-apple-darwin)",
           "installedTreeSha256": "00b4fc8cf891ddcaf9a83a7378aa22278fa815a887fe8f8a557a554772c95236"
         }
       }
