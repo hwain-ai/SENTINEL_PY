@@ -675,6 +675,8 @@ def _mutation_test_environment(
     source_root: Path | None = None,
 ) -> dict[str, str]:
     environment = _observer_test_environment(temporary_root, source_root)
+    # mutmut copies only project files into mutants/, so the dependencies stay in the pristine snapshot.
+    _append_dependency_path(environment, pristine_root)
     environment["SENTINEL_MUTMUT_PRISTINE_ROOT"] = str(pristine_root)
     return environment
 
@@ -695,12 +697,21 @@ def _observer_test_environment(
         if path.is_dir()
     )
     python_paths.append(str(source_root))
-    dependencies = source_root / DEPENDENCY_DIRECTORY
-    if dependencies.is_dir():
-        python_paths.append(str(dependencies))
     environment["PYTHONSAFEPATH"] = "1"
     environment["PYTHONPATH"] = os.pathsep.join(python_paths)
+    _append_dependency_path(environment, source_root)
     return environment
+
+
+def _append_dependency_path(environment: dict[str, str], root: Path) -> None:
+    """Put <root>/.sentinel-deps last on PYTHONPATH so project code shadows its dependencies."""
+
+    dependencies = root / DEPENDENCY_DIRECTORY
+    if not dependencies.is_dir():
+        return
+    python_paths = environment["PYTHONPATH"].split(os.pathsep)
+    if str(dependencies) not in python_paths:
+        environment["PYTHONPATH"] = os.pathsep.join([*python_paths, str(dependencies)])
 
 
 def _load_observation(

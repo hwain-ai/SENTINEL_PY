@@ -12,7 +12,11 @@ sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 
 from sentinel_py.config import UsageConfigError, load_project  # noqa: E402
 from sentinel_py.project_files import DEPENDENCY_DIRECTORY, is_tool_owned_path  # noqa: E402
-from sentinel_py.runner.mutation_backend import _copy_project, _observer_test_environment  # noqa: E402
+from sentinel_py.runner.mutation_backend import (  # noqa: E402
+    _copy_project,
+    _mutation_test_environment,
+    _observer_test_environment,
+)
 
 
 def _config(excluded=None) -> dict:
@@ -78,6 +82,21 @@ class DependencyDirectoryTests(unittest.TestCase):
             self.assertIn(str(snapshot / "src"), paths)
             without = _observer_test_environment(base, base / "missing")
             self.assertNotIn(DEPENDENCY_DIRECTORY, without["PYTHONPATH"])
+
+    def test_mutmut_run_and_mutant_replay_see_the_snapshot_dependencies(self):
+        with tempfile.TemporaryDirectory(prefix="sentinel-py-deps-") as directory:
+            base = Path(directory)
+            snapshot = base / "project"
+            (snapshot / DEPENDENCY_DIRECTORY).mkdir(parents=True)
+            (snapshot / "mutants").mkdir()
+            dependencies = str(snapshot / DEPENDENCY_DIRECTORY)
+            run_environment = _mutation_test_environment(base, snapshot)
+            self.assertEqual([str(base / "observer"), dependencies], run_environment["PYTHONPATH"].split(":"))
+            replay_paths = _mutation_test_environment(base, snapshot, snapshot / "mutants")["PYTHONPATH"].split(":")
+            self.assertEqual(dependencies, replay_paths[-1])
+            self.assertNotIn(str(snapshot / "mutants" / DEPENDENCY_DIRECTORY), replay_paths)
+            baseline_paths = _mutation_test_environment(base, snapshot, snapshot)["PYTHONPATH"].split(":")
+            self.assertEqual(1, baseline_paths.count(dependencies))
 
 
 if __name__ == "__main__":

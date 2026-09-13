@@ -2,6 +2,7 @@
 
 ## 2026-09-13
 
+- **Fix** runner/mutation_backend.py: mutmut 실행과 kill 재검증 환경의 PYTHONPATH 에 스냅샷의 `.sentinel-deps` 가 빠져 있어, 외부 패키지를 쓰는 테스트(ItsDangerous 의 freezegun)가 mutmut 의 stats 단계에서 ImportError 로 끝나고 검사가 backendProcessFailed(종료 6)로 실패했다. 기준선 pytest 만 의존성 폴더를 보고 있었다. 의존성 경로 추가를 한 함수로 모아 세 실행 환경이 모두 스냅샷의 의존성 폴더를 마지막 항목으로 갖게 했다. 회귀 시험 1개 추가, 자체 시험 511개 통과.
 - **Update** config·runner·scripts/uv.sh: 모듈 설정 `excluded` 글롭으로 생산도 테스트도 아닌 Python 파일을 선언하고, 프로젝트 의존성 폴더 `.sentinel-deps`를 launcher의 `deps` 모드로 설치해 검사 때 PYTHONPATH에 올린다(분석·변이·보호·coverage 제외). 공개 프로젝트(ItsDangerous) 실행에 필요한 준비다.
 - **Update** cli.py·config/loader.py: `--changed-file`(반복)로 생산 소스를 변경분으로 좁힌다. 변경분에 생산 코드가 없으면 검사 없이 통과로 응답하고 증거를 남기지 않는다. 어댑터가 통합 요청의 changedFiles를 이 인자로 전달한다. 자체 시험 430개 통과.
 - **Creation** gate.py·sentinel-tool/: CRAP 상한(`--crap-max`, 기본 8)과 변이 최소 kill 비율(`--mutation-min`, 기본 100)을 명령에서 받아 판정에 쓰고, 통합 SENTINEL의 도구 요청을 받는 어댑터·첫 실행 준비 스크립트를 추가. 기준값 문자열 계약은 SENTINEL_SPEC threshold-v1.json과 같다.
