@@ -5,8 +5,12 @@ from __future__ import annotations
 from pathlib import Path
 
 
+# Locked third-party packages installed for the project's own tests; copied into
+# snapshots and put on PYTHONPATH, but never analyzed, protected or mutated.
+DEPENDENCY_DIRECTORY = ".sentinel-deps"
 DERIVED_DIRECTORY_NAMES = frozenset(
     (
+        DEPENDENCY_DIRECTORY,
         ".git",
         ".nox",
         ".pytest_cache",

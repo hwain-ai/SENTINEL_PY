@@ -49,7 +49,7 @@ done
 [[ "$(/usr/bin/sha256sum -- "$uv_binary" | /usr/bin/cut -d ' ' -f 1)" == "${uv_fields[7]}" ]] ||
   fail "uv executable checksum mismatch"
 
-[[ "$#" -ge 1 ]] || fail "usage: uv.sh {run|sync|lock|lock-check|--version} ..."
+[[ "$#" -ge 1 ]] || fail "usage: uv.sh {run|sync|lock|lock-check|deps|--version} ..."
 readonly mode="$1"
 shift
 common_environment=(
@@ -94,11 +94,22 @@ case "$mode" in
       lock --project "$repository_root" --check --offline \
       --python "$python_binary"
     ;;
+  deps)
+    # deps TARGET REQUIREMENTS [--offline]: install a checked project's own test
+    # requirements (wheels only) into TARGET for the pinned Python. TARGET is put on
+    # PYTHONPATH by the checker; it is never analyzed or mutated.
+    [[ "$#" -eq 2 || ( "$#" -eq 3 && "$3" == "--offline" ) ]] || fail "usage: uv.sh deps TARGET REQUIREMENTS [--offline]"
+    offline_argument=()
+    [[ "$#" -eq 3 ]] && offline_argument=(--offline)
+    exec /usr/bin/env -i "${common_environment[@]}" "$uv_binary" --no-config \
+      pip install --python "$python_binary" --target "$1" --requirement "$2" \
+      --only-binary :all: --link-mode=copy --reinstall "${offline_argument[@]}"
+    ;;
   --version)
     [[ "$#" -eq 0 ]] || fail "usage: uv.sh --version"
     exec /usr/bin/env -i "${common_environment[@]}" "$uv_binary" --version
     ;;
   *)
-    fail "usage: uv.sh {run|sync|lock|lock-check|--version} ..."
+    fail "usage: uv.sh {run|sync|lock|lock-check|deps|--version} ..."
     ;;
 esac

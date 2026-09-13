@@ -391,7 +391,7 @@ class BackendConfigTests(unittest.TestCase):
 
             observer_environment.assert_called_once_with(temporary_root, module_root)
             self.assertEqual(
-                "[report]\nexclude_lines =\n",
+                "[run]\nomit =\n    .sentinel-deps/*\n[report]\nexclude_lines =\n",
                 coverage_config.read_text(encoding="utf-8"),
             )
             self.assertEqual(

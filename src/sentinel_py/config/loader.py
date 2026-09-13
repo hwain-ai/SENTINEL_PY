@@ -26,6 +26,7 @@ _MODULE_FIELDS = frozenset(
         "coverage",
         "testRoots",
         "testPatterns",
+        "excluded",
     )
 )
 _COVERAGE_FIELDS = frozenset(("command", "format", "report"))
@@ -179,6 +180,7 @@ def _module_config(value: object) -> ModuleConfig:
         coverage_report=coverage.get("report"),
         test_roots=value.get("testRoots"),
         test_patterns=value.get("testPatterns"),
+        excluded=value.get("excluded"),
     )
 
 
@@ -237,7 +239,10 @@ def _verify_project_scope(
     selected: ResolvedModule,
     sources: tuple[ProductionSource, ...],
 ) -> None:
-    evidence = ScopeEvidence(verified_tests=_verified_test_sources(project_root, modules))
+    evidence = ScopeEvidence(
+        verified_tests=_verified_test_sources(project_root, modules),
+        excluded=_excluded_sources(project_root, modules),
+    )
     scope = classify_python_scope(
         project_root,
         modules,
@@ -247,6 +252,24 @@ def _verify_project_scope(
     direct = frozenset(source.path.relative_to(project_root) for source in sources)
     if direct != frozenset(scope.production):
         raise UsageConfigError("invalidProductionScope")
+
+
+def _excluded_sources(
+    project_root: Path,
+    modules: tuple[ResolvedModule, ...],
+) -> tuple[Path, ...]:
+    """Project Python files a module declares as neither production nor tests (docs, tooling)."""
+
+    paths = set()
+    for module in modules:
+        for pattern in module.excluded:
+            for candidate in module.root.glob(pattern.as_posix()):
+                if candidate.is_symlink() or not candidate.is_file() or candidate.suffix != ".py":
+                    continue
+                if _is_tool_owned_candidate(module, candidate):
+                    continue
+                paths.add(candidate.resolve().relative_to(project_root))
+    return tuple(sorted(paths, key=_path_sort_key))
 
 
 def _verified_test_sources(

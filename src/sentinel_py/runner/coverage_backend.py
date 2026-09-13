@@ -10,6 +10,7 @@ from types import MappingProxyType
 from typing import Mapping
 
 from ..config import LoadedProject
+from ..project_files import DEPENDENCY_DIRECTORY
 from .mutation_backend import (
     MutationBackendError,
     _copy_project,
@@ -103,8 +104,9 @@ def _execute_coverage(
     formatter = _coverage_formatter(project)
     coverage_config = temporary_root / "coverage.ini"
     try:
+        # The dependency directory is third-party code: measured lines there would only slow the run.
         coverage_config.write_text(
-            "[report]\nexclude_lines =\n",
+            f"[run]\nomit =\n    {DEPENDENCY_DIRECTORY}/*\n[report]\nexclude_lines =\n",
             encoding="utf-8",
         )
     except OSError as error:

@@ -238,7 +238,7 @@ class ConfigLoaderTests(unittest.TestCase):
         from sentinel_py.config.loader import ProductionSource, _verify_project_scope
 
         project = Path("/project")
-        selected = SimpleNamespace(module_id="api")
+        selected = SimpleNamespace(module_id="api", excluded=())
         source = ProductionSource(project / "app" / "subject.py", "app/subject.py")
         scope = SimpleNamespace(production=(Path("app/other.py"),))
 

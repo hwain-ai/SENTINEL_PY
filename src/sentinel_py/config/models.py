@@ -33,6 +33,7 @@ class ModuleConfig:
     coverage_report: object | None = None
     test_roots: object | None = None
     test_patterns: object | None = None
+    excluded: object | None = None
 
 
 @dataclass(frozen=True)
@@ -75,6 +76,7 @@ class ResolvedModule:
     coverage_report: Path
     test_roots: tuple[Path, ...]
     test_patterns: tuple[str, ...]
+    excluded: tuple[Path, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -85,6 +87,7 @@ class ScopeEvidence:
     generated: tuple[Path, ...] = ()
     vendor: tuple[Path, ...] = ()
     build_output: tuple[Path, ...] = ()
+    excluded: tuple[Path, ...] = ()
 
 
 SourceCategory = Literal[
@@ -93,6 +96,7 @@ SourceCategory = Literal[
     "generated",
     "vendor",
     "build-output",
+    "excluded",
 ]
 
 
@@ -126,3 +130,4 @@ class ClassifiedScope:
     build_output: tuple[Path, ...]
     native_sources: tuple[Path, ...]
     classifications: tuple[ClassifiedSource, ...]
+    excluded: tuple[Path, ...] = ()

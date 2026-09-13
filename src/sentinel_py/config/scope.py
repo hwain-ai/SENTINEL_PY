@@ -142,6 +142,7 @@ def _evidence_sets(
         "generated": _normalize_evidence(project, native_sources, evidence.generated),
         "vendor": _normalize_evidence(project, native_sources, evidence.vendor),
         "build-output": _normalize_evidence(project, native_sources, evidence.build_output),
+        "excluded": _normalize_evidence(project, native_sources, evidence.excluded),
     }
 
 
@@ -273,6 +274,7 @@ def _scope_result(
         build_output=_stable_paths(evidence["build-output"]),
         native_sources=native_sources,
         classifications=classifications,
+        excluded=_stable_paths(evidence["excluded"]),
     )
 
 

@@ -127,6 +127,7 @@ def _resolve_module(
         test_patterns=_test_patterns(
             _pick(overrides.test_patterns, module.test_patterns, defaults.test_patterns),
         ),
+        excluded=() if module.excluded is None else _production_patterns(module.excluded),
     )
 
 

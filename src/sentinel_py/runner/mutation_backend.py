@@ -29,7 +29,7 @@ from ..mutmut_adapter import (
     load_results,
     read_raw_exit_codes,
 )
-from ..project_files import DERIVED_DIRECTORY_NAMES, is_tool_owned_path
+from ..project_files import DERIVED_DIRECTORY_NAMES, is_tool_owned_path, DEPENDENCY_DIRECTORY
 from .pytest_reporter import (
     _OBSERVATION_SCHEMA,
     _failure_signature,
@@ -151,7 +151,7 @@ def _copy_project(project_root: Path, snapshot: Path) -> None:
         shutil.copytree(
             project_root,
             snapshot,
-            ignore=shutil.ignore_patterns(*DERIVED_DIRECTORY_NAMES),
+            ignore=shutil.ignore_patterns(*(DERIVED_DIRECTORY_NAMES - {DEPENDENCY_DIRECTORY})),
         )
     except OSError as error:
         raise MutationBackendError("snapshotCopyFailed") from error
@@ -695,6 +695,9 @@ def _observer_test_environment(
         if path.is_dir()
     )
     python_paths.append(str(source_root))
+    dependencies = source_root / DEPENDENCY_DIRECTORY
+    if dependencies.is_dir():
+        python_paths.append(str(dependencies))
     environment["PYTHONSAFEPATH"] = "1"
     environment["PYTHONPATH"] = os.pathsep.join(python_paths)
     return environment
