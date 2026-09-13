@@ -1,6 +1,7 @@
 [project]
 name = "sentinel-py"
 version = "0.1.0"
+license = {text = "MIT"}
 description = "Native Python callable CRAP analysis core"
 requires-python = "==3.12.13"
 dependencies = [

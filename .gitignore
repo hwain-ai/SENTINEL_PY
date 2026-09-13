@@ -3,3 +3,4 @@
 mutants/
 /.coverage
 /coverage.json
+.claude/
