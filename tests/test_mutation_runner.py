@@ -16,6 +16,18 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 
 
+def _process_alive(pid: int) -> bool:
+    """Portable liveness probe (macOS has no /proc): signal 0 succeeds while the process exists."""
+
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
 class BackendConfigTests(unittest.TestCase):
     def test_backend_copy_names_reject_every_unrepresentable_or_ambiguous_name(self):
         from sentinel_py.runner.mutation_backend import (
@@ -1849,9 +1861,9 @@ class BackendConfigTests(unittest.TestCase):
             self.assertEqual("childProcessTimedOut", stopped.exception.code)
             child_pid = int(child_pid_path.read_text(encoding="utf-8"))
             deadline = time.monotonic() + 3
-            while Path(f"/proc/{child_pid}").exists() and time.monotonic() < deadline:
+            while _process_alive(child_pid) and time.monotonic() < deadline:
                 time.sleep(0.01)
-            self.assertFalse(Path(f"/proc/{child_pid}").exists())
+            self.assertFalse(_process_alive(child_pid))
 
     def test_child_processes_cannot_create_core_dumps(self):
         from sentinel_py.runner.mutation_backend import (
@@ -1921,13 +1933,13 @@ class BackendConfigTests(unittest.TestCase):
                 self.assertEqual("childProcessTreeNotDrained", stopped.exception.code)
                 child_pid = int(child_pid_path.read_text(encoding="utf-8"))
                 deadline = time.monotonic() + 3
-                while Path(f"/proc/{child_pid}").exists() and time.monotonic() < deadline:
+                while _process_alive(child_pid) and time.monotonic() < deadline:
                     time.sleep(0.01)
-                self.assertFalse(Path(f"/proc/{child_pid}").exists())
+                self.assertFalse(_process_alive(child_pid))
             finally:
                 if child_pid is None and child_pid_path.exists():
                     child_pid = int(child_pid_path.read_text(encoding="utf-8"))
-                if child_pid is not None and Path(f"/proc/{child_pid}").exists():
+                if child_pid is not None and _process_alive(child_pid):
                     os.kill(child_pid, 9)
 
     def test_backend_progress_extends_only_the_idle_deadline(self):

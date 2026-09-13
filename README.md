@@ -5,6 +5,7 @@ Python 프로젝트의 복잡도·테스트 실행 범위·변이 검사 결과�
 - 구현된 범위: 명령 실행, coverage·mutmut 도구 연결, 품질 판정과 실행 증거 기록.
 - 현재 작업: 실제 공개 프로젝트의 검사 결과를 회수했고, 별도 사본에서 원본 mutmut의 직접 비교 실행을 진행 중입니다. 새 비교 결과는 아직 없습니다.
 - 통합 연결: `sentinel-tool/` 폴더의 어댑터가 통합 SENTINEL의 도구 요청(표준입력 JSON)을 받아 이 검사기의 `check`를 실행하고 응답 JSON 하나만 표준출력에 씁니다. `sentinel setup --language python`이 `sentinel-tool/setup.sh`로 Python·uv·의존성을 준비한 뒤 이 어댑터를 묶음으로 설치합니다.
+- 지원 플랫폼: Linux(x86_64, arm64)와 macOS(Intel, Apple Silicon). Windows 는 WSL2 안에서 씁니다. 고정 mutmut 이 네이티브 Windows 실행을 거부하기 때문입니다. `scripts/toolchain.py` 가 플랫폼을 감지해 잠금 파일의 해당 항목(주소·크기·SHA-256·설치 트리 지문)으로 Python·uv 를 받습니다.
 - 미완료 범위: 실제 도구 비교, 설치 플러그인의 호스트 검증. [최신 검증 기록](docs/sentinel-python-native-validation.md)을 기준으로 확인합니다.
 
 ## 역할
@@ -33,7 +34,7 @@ ItsDangerous 2.2.0의 실제 재검증에서 빌드와 기본 테스트 297개 �
 
 ## 검증
 
-고정된 Python 3.12.13·uv 0.12.9와 의존성이 이미 준비된 환경에서, 저장소 폴더 안에서 다음 명령을 실행합니다. 실행기는 도구 파일을 검증한 뒤 기존 설치만 사용하며 다운로드나 자동 설치를 하지 않습니다. 준비물이 없거나 잠금과 다르면 중단합니다.
+처음 한 번 `sentinel-tool/setup.sh`(또는 `python3 -I -B scripts/toolchain.py setup`)로 고정된 Python 3.12.13·uv 0.12.9 와 의존성을 준비합니다. 잠금 파일의 공식 주소에서 받아 크기·SHA-256·설치 트리 지문을 대조하고, 이미 준비돼 있으면 확인만 합니다. 이후 실행기(`scripts/uv.sh`, 실체는 `scripts/toolchain.py`)는 도구 파일을 검증한 뒤 기존 설치만 사용하며, 잠금과 다르면 중단합니다. 자식 프로세스는 상속 없는 최소 환경(HOME·캐시는 `.toolchain` 아래, PATH 는 고정 도구만)에서 돕니다. 잠긴 Python 을 실행기 밖에서 직접 돌리면 표준 라이브러리에 바이트코드 캐시가 생겨 트리 지문이 어긋나므로, 반드시 실행기를 통해 씁니다.
 
 ```bash
 # ./scripts/uv.sh run = 검증된 기존 환경에서 실행; python -B = 임시 바이트코드 파일 생성 금지

@@ -211,10 +211,11 @@ class ToolchainLockUnitTests(unittest.TestCase):
         missing["toolchains"].pop("python")
         pending = copy.deepcopy(self.document)
         pending["status"] = "pending"
+        platform = toolchain_lock.platform_key()
         insecure = copy.deepcopy(self.document)
-        insecure["toolchains"]["python"]["archiveUrl"] = "http://example.invalid/x"
+        insecure["toolchains"]["python"]["platforms"][platform]["archiveUrl"] = "http://example.invalid/x"
         invalid_size = copy.deepcopy(self.document)
-        invalid_size["toolchains"]["python"]["archiveSize"] = 0
+        invalid_size["toolchains"]["python"]["platforms"][platform]["archiveSize"] = 0
         for document in (missing, pending, insecure, invalid_size):
             with self.subTest(document=document):
                 with self.assertRaises(toolchain_lock.LockError):
@@ -257,8 +258,11 @@ class ToolchainLockUnitTests(unittest.TestCase):
             )
         )
         insecure = copy.deepcopy(self.document)
-        insecure["toolchains"]["python"]["archiveUrl"] = "http://invalid"
+        insecure["toolchains"]["python"]["platforms"][toolchain_lock.platform_key()]["archiveUrl"] = "http://invalid"
         cases.append((insecure, "python archive URL must use HTTPS"))
+        unknown_platform = copy.deepcopy(self.document)
+        unknown_platform["toolchains"]["python"]["platforms"].pop(toolchain_lock.platform_key())
+        cases.append((unknown_platform, f"python toolchain has no entry for platform {toolchain_lock.platform_key()}"))
         for document, expected in cases:
             with self.subTest(expected=expected):
                 with self.assertRaises(toolchain_lock.LockError) as stopped:
@@ -602,7 +606,7 @@ class ToolchainLockUnitTests(unittest.TestCase):
                 ),
             )
 
-        select.assert_called_once_with(self.document, "python", True)
+        select.assert_called_once_with(self.document, "python", True, None)
 
 
 if __name__ == "__main__":

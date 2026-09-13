@@ -50,11 +50,12 @@ def main() -> int:
     ):
         return finish(3)
     gate = request.get("gate") or {}
-    launcher = home / "scripts" / "uv.sh"
+    # The cross-platform launcher is Python; run it with this interpreter so no PATH lookup is involved.
+    launcher = home / "scripts" / "toolchain.py"
     with tempfile.TemporaryDirectory(prefix="sentinel-tool-python-") as directory:
         result_file = Path(directory) / "result.json"
         command = [
-            str(launcher), "run", "sentinel-py", "check", "--strict",
+            sys.executable, "-I", "-B", str(launcher), "run", "sentinel-py", "check", "--strict",
             "--project", request["projectRoot"],
             "--format", "json", "--output", str(result_file),
         ]

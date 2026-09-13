@@ -2,6 +2,7 @@
 
 ## 2026-09-13
 
+- **Update** scripts/toolchain.py(신규)·toolchain_lock.py·toolchain.lock.json·sentinel-tool/: Linux 전용 bash 실행기(bootstrap-python.sh·python.sh·uv.sh 본문)를 표준 라이브러리만 쓰는 Python 실행기로 바꿨다. 잠금 파일은 도구마다 `platforms` 항목(linux-x86_64·linux-aarch64·darwin-x86_64·darwin-aarch64)에 공식 주소·크기·SHA-256·실행 파일 지문·설치 트리 지문을 담고, 실행기가 호스트 플랫폼을 감지해 고른다. 압축 해제는 tarfile 로 하며 권한을 700/600 으로 정규화하고 심볼릭 링크 모드는 지문에서 상수로 두어 macOS 와 Linux 의 지문이 같다(기존 linux-x86_64 지문은 그대로 일치). `uv.sh`·`setup.sh` 는 `python3 -I -B scripts/toolchain.py` 로 넘기는 얇은 wrapper 이고, 어댑터도 자기 인터프리터로 실행기를 부른다(어댑터 0.1.1). Windows 는 mutmut 이 네이티브 실행을 거부하므로 WSL2 안내로 갈음. 시험의 /proc 사용을 os.kill(pid, 0) 으로 바꿔 macOS 에서도 돌게 했다.
 - **Creation** .github/workflows/ci.yml: push·PR 마다 `sentinel-tool/setup.sh` 로 잠긴 Python·uv·의존성을 준비하고 자체 시험 전체를 돌리는 GitHub Actions 워크플로. `.toolchain` 은 잠금 파일 지문으로 캐시한다.
 - **Fix** runner/mutation_backend.py: mutmut 실행과 kill 재검증 환경의 PYTHONPATH 에 스냅샷의 `.sentinel-deps` 가 빠져 있어, 외부 패키지를 쓰는 테스트(ItsDangerous 의 freezegun)가 mutmut 의 stats 단계에서 ImportError 로 끝나고 검사가 backendProcessFailed(종료 6)로 실패했다. 기준선 pytest 만 의존성 폴더를 보고 있었다. 의존성 경로 추가를 한 함수로 모아 세 실행 환경이 모두 스냅샷의 의존성 폴더를 마지막 항목으로 갖게 했다. 회귀 시험 1개 추가, 자체 시험 511개 통과.
 - **Update** config·runner·scripts/uv.sh: 모듈 설정 `excluded` 글롭으로 생산도 테스트도 아닌 Python 파일을 선언하고, 프로젝트 의존성 폴더 `.sentinel-deps`를 launcher의 `deps` 모드로 설치해 검사 때 PYTHONPATH에 올린다(분석·변이·보호·coverage 제외). 공개 프로젝트(ItsDangerous) 실행에 필요한 준비다.

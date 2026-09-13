@@ -8,6 +8,7 @@ import functools
 import hashlib
 import json
 import os
+import platform as platform_module
 import re
 import stat
 import struct
@@ -24,6 +25,25 @@ SAFE_PATH_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9.+_/-]*")
 
 class LockError(ValueError):
     """Raised when lock data cannot identify one exact trusted toolchain."""
+
+
+PLATFORM_KEYS = ("linux-x86_64", "linux-aarch64", "darwin-x86_64", "darwin-aarch64")
+
+
+def platform_key(system: Optional[str] = None, machine: Optional[str] = None) -> str:
+    """linux-x86_64 | linux-aarch64 | darwin-x86_64 | darwin-aarch64 for this host."""
+
+    system = (system or platform_module.system()).lower()
+    machine = (machine or platform_module.machine()).lower()
+    if system not in ("linux", "darwin"):
+        raise LockError(f"unsupported operating system: {system}")
+    if machine in ("x86_64", "amd64"):
+        architecture = "x86_64"
+    elif machine in ("aarch64", "arm64"):
+        architecture = "aarch64"
+    else:
+        raise LockError(f"unsupported architecture: {machine}")
+    return f"{system}-{architecture}"
 
 
 def _unique_object(pairs: Iterable[Tuple[str, Any]]) -> dict[str, Any]:
@@ -94,12 +114,32 @@ def _required_safe_relative_path(mapping: dict[str, Any], key: str) -> str:
     return value
 
 
+def _for_platform(tool: str, toolchain: dict[str, Any], platform: Optional[str]) -> dict[str, Any]:
+    """Merge the platforms[...] entry for this (or the given) platform into the common fields."""
+
+    platforms = toolchain.get("platforms")
+    if platforms is None:
+        return toolchain
+    if not isinstance(platforms, dict):
+        raise LockError(f"{tool} platforms must be an object")
+    key = platform or platform_key()
+    entry = platforms.get(key)
+    if not isinstance(entry, dict):
+        raise LockError(f"{tool} toolchain has no entry for platform {key}")
+    merged = {name: value for name, value in toolchain.items() if name != "platforms"}
+    merged.update(entry)
+    return merged
+
+
 def _select(
-    document: dict[str, Any], tool: str, require_locked: bool
+    document: dict[str, Any], tool: str, require_locked: bool, platform: Optional[str] = None
 ) -> dict[str, Any]:
+    """The tool's lock entry for one platform: common fields merged with its platforms[...] entry."""
+
     toolchain = document["toolchains"].get(tool)
     if not isinstance(toolchain, dict):
         raise LockError(f"{tool} toolchain is missing")
+    toolchain = _for_platform(tool, toolchain, platform)
     repository_status = _required_text(document, "status")
     tool_status = _required_text(toolchain, "status")
     if require_locked and (
@@ -220,7 +260,8 @@ def _add_tree_entry(digest: Any, root: Path, resolved_root: Path, path: Path) ->
     resolved_target = path.resolve(strict=True)
     if not _inside(resolved_root, resolved_target):
         raise LockError(f"installed tree symlink escapes its root: {relative}")
-    _record(digest, b"symlink", relative_bytes, mode, os.fsencode(target))
+    # Symlink modes differ between Linux (777) and macOS (umask-dependent); only the target matters.
+    _record(digest, b"symlink", relative_bytes, 0o777, os.fsencode(target))
 
 
 def _verify_tree(toolchain: dict[str, Any], path: Path) -> None:
@@ -237,6 +278,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("lock", type=Path)
     parser.add_argument("tool", choices=("python", "uv"))
     parser.add_argument("--require-locked", action="store_true")
+    parser.add_argument("--platform", choices=PLATFORM_KEYS)
     parser.add_argument("--verify-tree", type=Path)
     parser.add_argument("--digest-tree", type=Path)
     return parser
@@ -245,7 +287,7 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: Optional[list[str]] = None) -> int:
     arguments = _parser().parse_args(argv)
     document = _load(arguments.lock)
-    toolchain = _select(document, arguments.tool, arguments.require_locked)
+    toolchain = _select(document, arguments.tool, arguments.require_locked, arguments.platform)
     if arguments.verify_tree is not None and arguments.digest_tree is not None:
         raise LockError("verify-tree and digest-tree are mutually exclusive")
     if arguments.verify_tree is not None:

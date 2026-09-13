@@ -5,33 +5,105 @@
     "python": {
       "vendor": "Astral python-build-standalone",
       "version": "3.12.13",
-      "platform": "linux-x86_64-gnu",
       "release": "20260807",
-      "archiveUrl": "https://github.com/astral-sh/python-build-standalone/releases/download/20260807/cpython-3.12.13%2B20260807-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz",
-      "archiveSize": 34163738,
-      "archiveSha256": "506191be3ee7bd190a8834dcdc1b3bc70aab50608deccc711935aa007239cabd",
-      "archiveRoot": "python",
-      "installDirectory": "python-3.12.13",
-      "binaryRelativePath": "bin/python3.12",
-      "binarySha256": "021044895e95be79dc2f110367607e684119afbc8ce75f6f0eec94844e0acec7",
-      "versionOutput": "Python 3.12.13",
-      "installedTreeSha256": "c4b77b84ef44bf6390eef79e4a9d7a74bf50241e9cebb3fc8cb47d4ce21c3e83",
-      "status": "locked"
+      "status": "locked",
+      "platforms": {
+        "linux-x86_64": {
+          "archiveUrl": "https://github.com/astral-sh/python-build-standalone/releases/download/20260807/cpython-3.12.13%2B20260807-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz",
+          "archiveSize": 34163738,
+          "archiveSha256": "506191be3ee7bd190a8834dcdc1b3bc70aab50608deccc711935aa007239cabd",
+          "archiveRoot": "python",
+          "installDirectory": "python-3.12.13",
+          "binaryRelativePath": "bin/python3.12",
+          "binarySha256": "021044895e95be79dc2f110367607e684119afbc8ce75f6f0eec94844e0acec7",
+          "versionOutput": "Python 3.12.13",
+          "installedTreeSha256": "c4b77b84ef44bf6390eef79e4a9d7a74bf50241e9cebb3fc8cb47d4ce21c3e83"
+        },
+        "linux-aarch64": {
+          "archiveUrl": "https://github.com/astral-sh/python-build-standalone/releases/download/20260807/cpython-3.12.13%2B20260807-aarch64-unknown-linux-gnu-install_only_stripped.tar.gz",
+          "archiveSize": 29226537,
+          "archiveSha256": "11e713ae1f969385907a76533cc554f6b2e3f1a84896009f91c3fc871034a170",
+          "archiveRoot": "python",
+          "installDirectory": "python-3.12.13",
+          "binaryRelativePath": "bin/python3.12",
+          "binarySha256": "f884d098e6661b400e99058e702343d5502b522adc037f29116910c434e9bea2",
+          "versionOutput": "Python 3.12.13",
+          "installedTreeSha256": "dec4cc8813b88c5d3f82d9e02cea1971bbc9fd591b319eb98a324510de63ce3f"
+        },
+        "darwin-x86_64": {
+          "archiveUrl": "https://github.com/astral-sh/python-build-standalone/releases/download/20260807/cpython-3.12.13%2B20260807-x86_64-apple-darwin-install_only_stripped.tar.gz",
+          "archiveSize": 24688662,
+          "archiveSha256": "127053f1736f721e391ddb46f07585d05756e15bb8d757d3bbc0519738998ba1",
+          "archiveRoot": "python",
+          "installDirectory": "python-3.12.13",
+          "binaryRelativePath": "bin/python3.12",
+          "binarySha256": "998814918a46569ca4b8ee3b2fc75eef9d2079eee292f426e0a3472db8f73a91",
+          "versionOutput": "Python 3.12.13",
+          "installedTreeSha256": "c33607a9419d0856e19f769b1f53d0cede965869234592dfd3e2826c3a34bec4"
+        },
+        "darwin-aarch64": {
+          "archiveUrl": "https://github.com/astral-sh/python-build-standalone/releases/download/20260807/cpython-3.12.13%2B20260807-aarch64-apple-darwin-install_only_stripped.tar.gz",
+          "archiveSize": 25008370,
+          "archiveSha256": "25baa97c65b3f0aa90e21131b4f9e80aef8899e8144006db8a9d2c1ab9e807e3",
+          "archiveRoot": "python",
+          "installDirectory": "python-3.12.13",
+          "binaryRelativePath": "bin/python3.12",
+          "binarySha256": "71720f1fc66989ebd691e81c96111b47ae6ff3f1a478666084d1cacbf0fccbf2",
+          "versionOutput": "Python 3.12.13",
+          "installedTreeSha256": "282cbf3b8b0bf19ed1525cf42a5232ff9ea35d30948defb1712360d48e8a0687"
+        }
+      }
     },
     "uv": {
       "vendor": "Astral uv",
       "version": "0.12.9",
-      "platform": "linux-x86_64-gnu",
-      "archiveUrl": "https://github.com/astral-sh/uv/releases/download/0.12.9/uv-x86_64-unknown-linux-gnu.tar.gz",
-      "archiveSize": 19423276,
-      "archiveSha256": "ec7a99cd05e0cd7f80243f135ce1361c76835cb0ee60055d14d20eba8eba1460",
-      "archiveRoot": "uv-x86_64-unknown-linux-gnu",
-      "installDirectory": "uv-0.12.9-linux-x86_64",
-      "binaryRelativePath": "uv",
-      "binarySha256": "671793498fe0a545432e2524b6691ffb9eea4540d9fda43ca2f978df2dbf8426",
-      "versionOutput": "uv 0.12.9 (x86_64-unknown-linux-gnu)",
-      "installedTreeSha256": "6575bd12eb626c516a696da81d001526ed1a012e5a43b7b6aa33bd0abaa54c0b",
-      "status": "locked"
+      "status": "locked",
+      "platforms": {
+        "linux-x86_64": {
+          "archiveUrl": "https://github.com/astral-sh/uv/releases/download/0.12.9/uv-x86_64-unknown-linux-gnu.tar.gz",
+          "archiveSize": 19423276,
+          "archiveSha256": "ec7a99cd05e0cd7f80243f135ce1361c76835cb0ee60055d14d20eba8eba1460",
+          "archiveRoot": "uv-x86_64-unknown-linux-gnu",
+          "installDirectory": "uv-0.12.9-linux-x86_64",
+          "binaryRelativePath": "uv",
+          "binarySha256": "671793498fe0a545432e2524b6691ffb9eea4540d9fda43ca2f978df2dbf8426",
+          "versionOutput": "uv 0.12.9 (x86_64-unknown-linux-gnu)",
+          "installedTreeSha256": "6575bd12eb626c516a696da81d001526ed1a012e5a43b7b6aa33bd0abaa54c0b"
+        },
+        "linux-aarch64": {
+          "archiveUrl": "https://github.com/astral-sh/uv/releases/download/0.12.9/uv-aarch64-unknown-linux-gnu.tar.gz",
+          "archiveSize": 18532532,
+          "archiveSha256": "c36fe17937ff6bd16dc42fc13854b5465999fcab2efe0af559381e945e3c6001",
+          "archiveRoot": "uv-aarch64-unknown-linux-gnu",
+          "installDirectory": "uv-0.12.9-linux-aarch64",
+          "binaryRelativePath": "uv",
+          "binarySha256": "0d6472f7dad77005481fca9fc82af89ae07aeab4c2ed3a3663d1bbfca2eabdb8",
+          "versionOutput": "uv 0.12.9 (aarch64-unknown-linux-gnu)",
+          "installedTreeSha256": "211ae3c1d22374a1a1f03d28c3648458acfd2f50a0480a3dd9e0ae6a9988694d"
+        },
+        "darwin-x86_64": {
+          "archiveUrl": "https://github.com/astral-sh/uv/releases/download/0.12.9/uv-x86_64-apple-darwin.tar.gz",
+          "archiveSize": 19952135,
+          "archiveSha256": "e1ca175824f1056589ce9908f7631879ebc3c36535b5e63dc06510beb370b4c1",
+          "archiveRoot": "uv-x86_64-apple-darwin",
+          "installDirectory": "uv-0.12.9-darwin-x86_64",
+          "binaryRelativePath": "uv",
+          "binarySha256": "935ac2592d1f6975571fc332b02527049fc4c4fc3604917a9936b2cf329aa821",
+          "versionOutput": "uv 0.12.9 (x86_64-apple-darwin)",
+          "installedTreeSha256": "9d2c13f58c1a4d3689173e74ba6e9e9a6fbd7cd63488f3870d3afc30dd5a2434"
+        },
+        "darwin-aarch64": {
+          "archiveUrl": "https://github.com/astral-sh/uv/releases/download/0.12.9/uv-aarch64-apple-darwin.tar.gz",
+          "archiveSize": 16636737,
+          "archiveSha256": "301f72afaf54060f92da7016cb0115bd077f43a9c8e39c1d8170a0bac80fd398",
+          "archiveRoot": "uv-aarch64-apple-darwin",
+          "installDirectory": "uv-0.12.9-darwin-aarch64",
+          "binaryRelativePath": "uv",
+          "binarySha256": "5e2e4133be3e61a25f819b95f6d6bb38c61fb3062eddf3e0857bb72fa3c69205",
+          "versionOutput": "uv 0.12.9 (aarch64-apple-darwin)",
+          "installedTreeSha256": "00b4fc8cf891ddcaf9a83a7378aa22278fa815a887fe8f8a557a554772c95236"
+        }
+      }
     }
   }
 }
