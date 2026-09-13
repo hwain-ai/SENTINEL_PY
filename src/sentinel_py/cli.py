@@ -9,7 +9,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from .backend_lock import BackendLockError
-from .config import LoadedProject, UsageConfigError, load_project
+from .config import LoadedProject, UsageConfigError, load_project, restrict_production
 from .coverage import CoverageFormatError, MetricOrderingError
 from .crap import AnalysisError
 from .evidence import EvidenceError, read_history
@@ -64,6 +64,7 @@ def _add_quality_command(
     parser.add_argument("--correlation-id")
     parser.add_argument("--crap-max")
     parser.add_argument("--mutation-min")
+    parser.add_argument("--changed-file", action="append", default=[])
 
 
 def _add_doctor_command(subparsers: argparse._SubParsersAction) -> None:
@@ -131,7 +132,23 @@ def _dispatch(arguments: argparse.Namespace) -> int:
         getattr(arguments, "mutation_min", None),
     )
     project = load_project(arguments.project, arguments.config, arguments.module)
+    changed = getattr(arguments, "changed_file", [])
+    if changed and arguments.command in _QUALITY_COMMANDS:
+        restricted = restrict_production(project, changed)
+        if restricted is None:
+            return _emit_result(arguments, 0, _empty_changed_scope(arguments.command))
+        project = restricted
     return _dispatch_project_command(arguments, project, gate)
+
+
+def _empty_changed_scope(command: str) -> dict:
+    """No changed production source: nothing is judged, so nothing failed and no evidence is written."""
+
+    return {
+        "changedScope": "empty",
+        "run": {"command": command, "mode": "strict", "terminalStatus": "passed"},
+        "schemaVersion": "sentinel-quality-result-v1",
+    }
 
 
 def _quality_command_pending(arguments: argparse.Namespace) -> bool:

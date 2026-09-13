@@ -13,7 +13,7 @@ from .models import (
     SourceCategory,
     UsageConfigError,
 )
-from .loader import LoadedProject, ProductionSource, load_project
+from .loader import LoadedProject, ProductionSource, load_project, restrict_production
 from .resolver import (
     APPROVED_PYTHON_DEFAULTS,
     resolve_python_module,

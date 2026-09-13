@@ -519,6 +519,7 @@ class CliHelpTests(unittest.TestCase):
                 "correlation_id": "00000000-0000-4000-8000-000000000000",
                 "crap_max": None,
                 "mutation_min": None,
+                "changed_file": [],
             },
             vars(arguments),
         )

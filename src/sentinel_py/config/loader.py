@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import json
 from dataclasses import dataclass
 from fnmatch import fnmatchcase
@@ -64,6 +65,33 @@ def load_project(
     resolved_modules = resolve_python_modules(project_root, modules)
     _verify_project_scope(project_root, resolved_modules, module, sources)
     return LoadedProject(project_root, config_path, module, sources)
+
+
+def restrict_production(project: LoadedProject, changed: Iterable[str]) -> LoadedProject | None:
+    """Keep only production sources named in ``changed`` (project-relative POSIX paths).
+
+    Returns None when no changed path is a production source: in changed mode there is
+    then no changed production code to judge.
+    """
+
+    wanted = frozenset(_changed_path(value) for value in changed)
+    kept = tuple(
+        source
+        for source in project.production_sources
+        if source.path.relative_to(project.project_root).as_posix() in wanted
+    )
+    if not kept:
+        return None
+    return dataclasses.replace(project, production_sources=kept)
+
+
+def _changed_path(value: object) -> str:
+    if not isinstance(value, str) or not value or "\0" in value or value.startswith("/"):
+        raise UsageConfigError("changedPathInvalid")
+    parts = value.split("/")
+    if any(part in ("", ".", "..") for part in parts):
+        raise UsageConfigError("changedPathInvalid")
+    return value
 
 
 def _project_root(value: str | None) -> Path:

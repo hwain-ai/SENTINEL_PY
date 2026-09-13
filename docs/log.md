@@ -2,6 +2,7 @@
 
 ## 2026-09-13
 
+- **Update** cli.py·config/loader.py: `--changed-file`(반복)로 생산 소스를 변경분으로 좁힌다. 변경분에 생산 코드가 없으면 검사 없이 통과로 응답하고 증거를 남기지 않는다. 어댑터가 통합 요청의 changedFiles를 이 인자로 전달한다. 자체 시험 430개 통과.
 - **Creation** gate.py·sentinel-tool/: CRAP 상한(`--crap-max`, 기본 8)과 변이 최소 kill 비율(`--mutation-min`, 기본 100)을 명령에서 받아 판정에 쓰고, 통합 SENTINEL의 도구 요청을 받는 어댑터·첫 실행 준비 스크립트를 추가. 기준값 문자열 계약은 SENTINEL_SPEC threshold-v1.json과 같다.
 - **Update** evidence/store.py·quality.py: crap 구성요소에 crapMax, mutation 구성요소에 mutationMin을 기록하고 의미 검사도 그 값으로 재계산. 이 항목이 없는 이전 증거 파일은 유효하지 않으므로 `.sentinel/state-v1`을 지우고 다시 검사한다.
 - 검증: 자체 시험 427개 통과. 통합 명령의 setup→doctor→check --experimental 경로를 작은 프로젝트에서 실행해 기본 기준값 통과, `--crap-max 0.5` 품질 실패, `--mutation-min 0` 통과와 증거의 기준값 기록을 확인했다.

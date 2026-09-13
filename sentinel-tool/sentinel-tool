@@ -64,6 +64,8 @@ def main() -> int:
             command += ["--crap-max", str(gate["crapMax"])]
         if "mutationMin" in gate:
             command += ["--mutation-min", str(gate["mutationMin"])]
+        for changed in request.get("changedFiles") or []:
+            command += ["--changed-file", str(changed)]
         with open(Path(directory) / "checker.log", "wb") as log:
             try:
                 completed = subprocess.run(
