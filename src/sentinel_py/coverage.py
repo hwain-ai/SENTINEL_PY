@@ -10,6 +10,7 @@ from fractions import Fraction
 from types import MappingProxyType
 from typing import Dict, Iterable, Mapping, Optional, Tuple
 
+from .gate import DEFAULT_GATE
 from .crap import (
     MAX_SAFE_INTEGER,
     AnalysisError,
@@ -201,6 +202,7 @@ def measure_source(
     source: bytes,
     module_relative_path: str,
     report: CoverageReport,
+    crap_max: Fraction = DEFAULT_GATE.crap_max,
 ) -> Tuple[CallableMetric, ...]:
     if not isinstance(report, CoverageReport):
         raise TypeError("report must be a CoverageReport")
@@ -219,6 +221,7 @@ def measure_source(
                     covered=covered,
                     total=total,
                     unknown_reason=unknown_reason,
+                    crap_max=crap_max,
                 ),
             )
         )
@@ -247,11 +250,12 @@ def _require_lines_within_source(
 
 def sort_callable_metrics(
     metrics: Iterable[CallableMetric],
+    crap_max: Fraction = DEFAULT_GATE.crap_max,
 ) -> Tuple[CallableMetric, ...]:
     materialized = tuple(metrics)
     seen = set()
     for metric in materialized:
-        _validate_metric(metric)
+        _validate_metric(metric, crap_max)
         identity = _validated_metric_identity(metric)
         if identity in seen:
             raise MetricOrderingError("identityAmbiguous")
@@ -259,8 +263,11 @@ def sort_callable_metrics(
     return tuple(sorted(materialized, key=_metric_sort_key))
 
 
-def evaluate_crap_gate(metrics: Iterable[CallableMetric]) -> CrapGateResult:
-    ordered = sort_callable_metrics(metrics)
+def evaluate_crap_gate(
+    metrics: Iterable[CallableMetric],
+    crap_max: Fraction = DEFAULT_GATE.crap_max,
+) -> CrapGateResult:
+    ordered = sort_callable_metrics(metrics, crap_max)
     if not ordered:
         return CrapGateResult(False, "emptyCallableInventory", ordered)
     if any(metric.crap.unknown_reason is not None for metric in ordered):
@@ -270,7 +277,7 @@ def evaluate_crap_gate(metrics: Iterable[CallableMetric]) -> CrapGateResult:
     return CrapGateResult(True, "passed", ordered)
 
 
-def _validate_metric(metric: CallableMetric) -> None:
+def _validate_metric(metric: CallableMetric, crap_max: Fraction) -> None:
     if not isinstance(metric, CallableMetric):
         raise MetricOrderingError("metricTypeInvalid")
     if not isinstance(metric.callable, CallableDefinition):
@@ -283,6 +290,7 @@ def _validate_metric(metric: CallableMetric) -> None:
             covered=metric.crap.covered,
             total=metric.crap.total,
             unknown_reason=metric.crap.unknown_reason,
+            crap_max=crap_max,
         )
     except (TypeError, ValueError) as error:
         raise MetricOrderingError("metricInvariantInvalid") from error

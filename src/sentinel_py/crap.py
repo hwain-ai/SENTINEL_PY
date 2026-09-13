@@ -7,12 +7,14 @@ import codecs
 import hashlib
 import io
 import math
+from fractions import Fraction
 import re
 import tokenize
 from dataclasses import dataclass, replace
 from pathlib import PurePosixPath
 from typing import List, Optional, Sequence, Tuple
 
+from .gate import DEFAULT_GATE, crap_passes
 from .rendering import render_canonical_decimal
 
 
@@ -710,6 +712,7 @@ def calculate_crap(
     covered: int,
     total: int,
     unknown_reason: Optional[str] = None,
+    crap_max: Fraction = DEFAULT_GATE.crap_max,
 ) -> CrapResult:
     _require_integer("complexity", complexity, minimum=1)
     _require_integer("covered", covered, minimum=0)
@@ -745,7 +748,7 @@ def calculate_crap(
         numerator=reduced_numerator,
         denominator=reduced_denominator,
         decimal=render_canonical_decimal(reduced_numerator, reduced_denominator),
-        passed=numerator <= 8 * denominator,
+        passed=crap_passes(numerator, denominator, crap_max),
         unknown_reason=None,
     )
 

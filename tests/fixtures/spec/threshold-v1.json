@@ -1,0 +1,115 @@
+{
+  "schemaVersion": "sentinel-gate-threshold-v1",
+  "thresholdPattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,2})?$",
+  "defaults": {
+    "crapMax": "8",
+    "mutationMin": "100"
+  },
+  "crapCases": [
+    {
+      "id": "default-limit-boundary",
+      "input": {"cyclomaticComplexity": 8, "coveredUnits": 1, "totalUnits": 1},
+      "crapMax": "8",
+      "expected": {"pass": true}
+    },
+    {
+      "id": "default-limit-exceeded",
+      "input": {"cyclomaticComplexity": 9, "coveredUnits": 1, "totalUnits": 1},
+      "crapMax": "8",
+      "expected": {"pass": false}
+    },
+    {
+      "id": "raised-limit-passes",
+      "input": {"cyclomaticComplexity": 9, "coveredUnits": 1, "totalUnits": 1},
+      "crapMax": "9",
+      "expected": {"pass": true}
+    },
+    {
+      "id": "decimal-limit-below-value",
+      "input": {"cyclomaticComplexity": 4, "coveredUnits": 3, "totalUnits": 4},
+      "crapMax": "4.24",
+      "expected": {"pass": false}
+    },
+    {
+      "id": "decimal-limit-exact",
+      "input": {"cyclomaticComplexity": 4, "coveredUnits": 3, "totalUnits": 4},
+      "crapMax": "4.25",
+      "expected": {"pass": true}
+    },
+    {
+      "id": "lowered-limit-fails",
+      "input": {"cyclomaticComplexity": 2, "coveredUnits": 1, "totalUnits": 2},
+      "crapMax": "2.49",
+      "expected": {"pass": false}
+    }
+  ],
+  "mutationCases": [
+    {
+      "id": "all-killed-default",
+      "counts": {"killed": 4, "survived": 0, "uncovered": 0, "timedOut": 0, "compileError": 0, "runtimeError": 0, "pending": 0, "ignored": 0, "toolError": 0},
+      "inScope": 4,
+      "unauthorizedExclusion": 0,
+      "mutationMin": "100",
+      "expected": {"pass": true}
+    },
+    {
+      "id": "one-survived-default",
+      "counts": {"killed": 3, "survived": 1, "uncovered": 0, "timedOut": 0, "compileError": 0, "runtimeError": 0, "pending": 0, "ignored": 0, "toolError": 0},
+      "inScope": 4,
+      "unauthorizedExclusion": 0,
+      "mutationMin": "100",
+      "expected": {"pass": false}
+    },
+    {
+      "id": "one-survived-75",
+      "counts": {"killed": 3, "survived": 1, "uncovered": 0, "timedOut": 0, "compileError": 0, "runtimeError": 0, "pending": 0, "ignored": 0, "toolError": 0},
+      "inScope": 4,
+      "unauthorizedExclusion": 0,
+      "mutationMin": "75",
+      "expected": {"pass": true}
+    },
+    {
+      "id": "one-survived-75-01",
+      "counts": {"killed": 3, "survived": 1, "uncovered": 0, "timedOut": 0, "compileError": 0, "runtimeError": 0, "pending": 0, "ignored": 0, "toolError": 0},
+      "inScope": 4,
+      "unauthorizedExclusion": 0,
+      "mutationMin": "75.01",
+      "expected": {"pass": false}
+    },
+    {
+      "id": "timed-out-counts-against-rate",
+      "counts": {"killed": 3, "survived": 0, "uncovered": 0, "timedOut": 1, "compileError": 0, "runtimeError": 0, "pending": 0, "ignored": 0, "toolError": 0},
+      "inScope": 4,
+      "unauthorizedExclusion": 0,
+      "mutationMin": "75",
+      "expected": {"pass": true}
+    },
+    {
+      "id": "zero-percent-still-needs-mutants",
+      "counts": {"killed": 0, "survived": 0, "uncovered": 0, "timedOut": 0, "compileError": 0, "runtimeError": 0, "pending": 0, "ignored": 0, "toolError": 0},
+      "inScope": 0,
+      "unauthorizedExclusion": 0,
+      "mutationMin": "0",
+      "expected": {"pass": false}
+    },
+    {
+      "id": "zero-percent-passes-with-survivors",
+      "counts": {"killed": 0, "survived": 2, "uncovered": 0, "timedOut": 0, "compileError": 0, "runtimeError": 0, "pending": 0, "ignored": 0, "toolError": 0},
+      "inScope": 2,
+      "unauthorizedExclusion": 0,
+      "mutationMin": "0",
+      "expected": {"pass": true}
+    },
+    {
+      "id": "exclusion-fails-any-percent",
+      "counts": {"killed": 2, "survived": 0, "uncovered": 0, "timedOut": 0, "compileError": 0, "runtimeError": 0, "pending": 0, "ignored": 0, "toolError": 0},
+      "inScope": 2,
+      "unauthorizedExclusion": 1,
+      "mutationMin": "0",
+      "expected": {"pass": false}
+    }
+  ],
+  "invalidThresholds": ["", "8.", ".5", "08", "8.000", "-1", "1e1", " 8", "8,5", "abc", "+8"],
+  "invalidCrapMaxes": ["0", "0.00"],
+  "invalidMutationMins": ["100.01", "101"]
+}

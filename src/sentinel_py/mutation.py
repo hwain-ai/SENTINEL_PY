@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import math
+from fractions import Fraction
 from collections.abc import Sized
 from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Iterable, Mapping, Optional, Tuple
 
 from .crap import MAX_SAFE_INTEGER
+from .gate import DEFAULT_GATE, kill_rate_passes
 from .rendering import render_canonical_decimal
 
 
@@ -55,6 +57,7 @@ def evaluate_mutation_gate(
     candidate_ids: Iterable[str],
     records: Iterable[MutantRecord],
     unauthorized_exclusion: int = 0,
+    mutation_min: Fraction = DEFAULT_GATE.mutation_min,
 ) -> MutationGateResult:
     candidates = _materialize_candidates(candidate_ids)
     outcomes = _materialize_records(records)
@@ -64,7 +67,7 @@ def evaluate_mutation_gate(
     in_scope = len(candidates)
     killed = counts["killed"]
     fraction = _kill_rate_fraction(killed, in_scope)
-    reason = _gate_reason(in_scope, killed, unauthorized_exclusion)
+    reason = _gate_reason(in_scope, killed, unauthorized_exclusion, mutation_min)
     return MutationGateResult(
         passed=reason == "passed",
         reason=reason,
@@ -164,11 +167,17 @@ def _kill_rate_fraction(killed: int, in_scope: int) -> Optional[Tuple[int, int]]
     return killed // divisor, in_scope // divisor
 
 
-def _gate_reason(in_scope: int, killed: int, unauthorized_exclusion: int) -> str:
+def _gate_reason(
+    in_scope: int,
+    killed: int,
+    unauthorized_exclusion: int,
+    mutation_min: Fraction,
+) -> str:
     if in_scope == 0:
         return "zeroMutants"
     if unauthorized_exclusion != 0:
         return "unauthorizedExclusion"
-    if killed != in_scope:
+    # With the default 100 percent this is exactly killed != in_scope.
+    if not kill_rate_passes(killed, in_scope, mutation_min):
         return "nonKilledMutant"
     return "passed"

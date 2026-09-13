@@ -1,0 +1,83 @@
+#!/usr/bin/python3 -I
+"""SENTINEL tool-protocol adapter for the Python checker.
+
+Reads one sentinel-tool-protocol-v1 request from stdin, runs the pinned
+sentinel-py check from the repository named in the sibling ``home`` file and
+writes exactly one response to stdout. Everything the checker prints goes to a
+temporary log, never to this process's stdout.
+"""
+
+import json
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+
+STATUS_BY_EXIT = {
+    0: "passed",
+    1: "toolError",
+    2: "qualityFailed",
+    3: "usageConfigError",
+    4: "baselineFailed",
+    5: "dependencyError",
+    6: "backendError",
+    7: "evidenceError",
+}
+IDENTITY_KEYS = ("protocolVersion", "requestId", "command", "moduleId", "language")
+
+
+def main() -> int:
+    here = Path(__file__).resolve().parent
+    manifest = json.loads((here / "sentinel-tool.json").read_text(encoding="utf-8"))
+    home = Path((here / "home").read_text(encoding="utf-8").splitlines()[0])
+    request = json.load(sys.stdin)
+    response = {key: request.get(key) for key in IDENTITY_KEYS}
+    response["toolVersion"] = manifest["version"]
+
+    def finish(exit_code: int) -> int:
+        status = STATUS_BY_EXIT.get(exit_code, "backendError")
+        exit_code = 6 if status == "backendError" else exit_code
+        response.update(status=status, exitCode=exit_code, passed=status == "passed")
+        sys.stdout.write(json.dumps(response, separators=(",", ":")) + "\n")
+        sys.stdout.flush()
+        return exit_code
+
+    if (
+        request.get("protocolVersion") != "sentinel-tool-protocol-v1"
+        or request.get("command") != "check"
+        or request.get("language") != manifest["language"]
+    ):
+        return finish(3)
+    gate = request.get("gate") or {}
+    launcher = home / "scripts" / "uv.sh"
+    with tempfile.TemporaryDirectory(prefix="sentinel-tool-python-") as directory:
+        result_file = Path(directory) / "result.json"
+        command = [
+            str(launcher), "run", "sentinel-py", "check", "--strict",
+            "--project", request["projectRoot"],
+            "--format", "json", "--output", str(result_file),
+        ]
+        if request.get("config"):
+            command += ["--config", request["config"]]
+        if "crapMax" in gate:
+            command += ["--crap-max", str(gate["crapMax"])]
+        if "mutationMin" in gate:
+            command += ["--mutation-min", str(gate["mutationMin"])]
+        with open(Path(directory) / "checker.log", "wb") as log:
+            try:
+                completed = subprocess.run(
+                    command,
+                    cwd=request["projectRoot"],
+                    stdin=subprocess.DEVNULL,
+                    stdout=log,
+                    stderr=log,
+                    check=False,
+                )
+            except OSError:
+                return finish(5)
+    return finish(completed.returncode)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

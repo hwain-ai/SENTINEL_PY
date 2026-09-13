@@ -18,6 +18,8 @@ SOURCE_ROOT = REPOSITORY_ROOT / "src"
 
 sys.path.insert(0, str(SOURCE_ROOT))
 
+from sentinel_py.gate import DEFAULT_GATE  # noqa: E402
+
 
 class CliHelpTests(unittest.TestCase):
     def test_error_emission_builds_one_exact_diagnostic(self):
@@ -225,16 +227,16 @@ class CliHelpTests(unittest.TestCase):
             ) as emit,
         ):
             results = tuple(
-                cli._dispatch_project_command(argument, project)
+                cli._dispatch_project_command(argument, project, DEFAULT_GATE)
                 for argument in arguments
             )
 
         self.assertEqual((101, 102, 103, 104, 105), results)
         doctor.assert_called_once_with(project)
-        check.assert_called_once_with(project, "check-id")
-        mutation.assert_called_once_with(project, "mutation-id")
-        local_crap.assert_called_once_with(project, "local-id")
-        strict_crap.assert_called_once_with(project, "strict-id")
+        check.assert_called_once_with(project, "check-id", DEFAULT_GATE)
+        mutation.assert_called_once_with(project, "mutation-id", DEFAULT_GATE)
+        local_crap.assert_called_once_with(project, "local-id", DEFAULT_GATE)
+        strict_crap.assert_called_once_with(project, "strict-id", DEFAULT_GATE)
         self.assertEqual(
             [
                 call(arguments[0], 0, doctor_document),
@@ -268,7 +270,7 @@ class CliHelpTests(unittest.TestCase):
             self.assertEqual(27, cli._dispatch(arguments))
 
         load_project.assert_called_once_with("project", "chosen.json", "api")
-        dispatch_project.assert_called_once_with(arguments, project)
+        dispatch_project.assert_called_once_with(arguments, project, DEFAULT_GATE)
 
     def test_pending_quality_commands_cover_check_and_mutation_only(self):
         from sentinel_py import cli
@@ -515,6 +517,8 @@ class CliHelpTests(unittest.TestCase):
                 "format": "json",
                 "output": "result.json",
                 "correlation_id": "00000000-0000-4000-8000-000000000000",
+                "crap_max": None,
+                "mutation_min": None,
             },
             vars(arguments),
         )

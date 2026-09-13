@@ -19,6 +19,7 @@ from .evidence import (
     commit_quality_evidence,
 )
 from .evidence.store import _format_utc
+from .gate import DEFAULT_GATE, GateThresholds
 from .mutation import MutantRecord, evaluate_mutation_gate
 from .rendering import render_canonical_decimal
 from .runner import run_fresh_coverage, run_mutmut
@@ -53,25 +54,33 @@ def doctor_result(project: LoadedProject) -> dict:
     }
 
 
-def run_local_crap(project: LoadedProject, correlation_id: str | None) -> tuple[int, dict]:
+def run_local_crap(
+    project: LoadedProject,
+    correlation_id: str | None,
+    gate: GateThresholds = DEFAULT_GATE,
+) -> tuple[int, dict]:
     """Analyze a configured local coverage report and commit redacted evidence."""
 
     run_id = str(uuid.uuid4())
     correlation = _correlation_id(correlation_id, run_id)
     report = _coverage_report(project.module.coverage_report)
-    metrics = _measure_project(project, report)
-    return _complete_crap(project, metrics, "local", correlation, run_id)
+    metrics = _measure_project(project, report, gate)
+    return _complete_crap(project, metrics, "local", correlation, run_id, gate)
 
 
-def run_strict_crap(project: LoadedProject, correlation_id: str | None) -> tuple[int, dict]:
+def run_strict_crap(
+    project: LoadedProject,
+    correlation_id: str | None,
+    gate: GateThresholds = DEFAULT_GATE,
+) -> tuple[int, dict]:
     """Generate fresh snapshot coverage and commit the native CRAP result."""
 
     run_id = str(uuid.uuid4())
     correlation = _correlation_id(correlation_id, run_id)
     execution = run_fresh_coverage(project)
     report = load_coverage_json(execution.report)
-    metrics = _measure_sources(execution.sources, report)
-    return _complete_crap(project, metrics, "strict", correlation, run_id)
+    metrics = _measure_sources(execution.sources, report, gate)
+    return _complete_crap(project, metrics, "strict", correlation, run_id, gate)
 
 
 def _complete_crap(
@@ -80,9 +89,10 @@ def _complete_crap(
     mode: str,
     correlation: str,
     run_id: str,
+    thresholds: GateThresholds = DEFAULT_GATE,
 ) -> tuple[int, dict]:
-    gate = evaluate_crap_gate(metrics)
-    summary = _crap_summary(gate.metrics, gate.passed, gate.reason)
+    gate = evaluate_crap_gate(metrics, thresholds.crap_max)
+    summary = _crap_summary(gate.metrics, gate.passed, gate.reason, thresholds.as_json()["crapMax"])
     status = "passed" if gate.passed else "qualityFailed"
     run = _run_record("crap", mode, run_id, correlation, status)
     findings = _finding_identities(project, gate.metrics, gate.reason)
@@ -103,16 +113,21 @@ def _complete_crap(
 def run_strict_mutation(
     project: LoadedProject,
     correlation_id: str | None,
+    thresholds: GateThresholds = DEFAULT_GATE,
 ) -> tuple[int, dict]:
-    """Execute the locked backend and apply SENTINEL's killed-only gate."""
+    """Execute the locked backend and apply SENTINEL's minimum kill-rate gate."""
 
     run_id = str(uuid.uuid4())
     correlation = _correlation_id(correlation_id, run_id)
     execution = run_mutmut(project)
-    gate = evaluate_mutation_gate(execution.candidate_ids, execution.records)
+    gate = evaluate_mutation_gate(
+        execution.candidate_ids,
+        execution.records,
+        mutation_min=thresholds.mutation_min,
+    )
     status = "passed" if gate.passed else "qualityFailed"
     run = _run_record("mutation", "strict", run_id, correlation, status)
-    summary = _mutation_summary(gate)
+    summary = _mutation_summary(gate, thresholds.as_json()["mutationMin"])
     findings = _mutation_findings(project, execution.records, gate.reason)
     result = {
         "mutation": summary,
@@ -128,25 +143,30 @@ def run_strict_mutation(
     return (0 if gate.passed else 2), result
 
 
-def run_strict_check(project: LoadedProject, correlation_id: str | None) -> tuple[int, dict]:
+def run_strict_check(
+    project: LoadedProject,
+    correlation_id: str | None,
+    thresholds: GateThresholds = DEFAULT_GATE,
+) -> tuple[int, dict]:
     """Run fresh CRAP and mutation gates and commit exactly one combined run."""
 
     run_id = str(uuid.uuid4())
     correlation = _correlation_id(correlation_id, run_id)
     coverage_execution = run_fresh_coverage(project)
     report = load_coverage_json(coverage_execution.report)
-    metrics = _measure_sources(coverage_execution.sources, report)
-    crap_gate = evaluate_crap_gate(metrics)
+    metrics = _measure_sources(coverage_execution.sources, report, thresholds)
+    crap_gate = evaluate_crap_gate(metrics, thresholds.crap_max)
     mutation_execution = run_mutmut(project)
     mutation_gate = evaluate_mutation_gate(
         mutation_execution.candidate_ids,
         mutation_execution.records,
+        mutation_min=thresholds.mutation_min,
     )
     passed = crap_gate.passed and mutation_gate.passed
     status = "passed" if passed else "qualityFailed"
     run = _run_record("check", "strict", run_id, correlation, status)
-    crap = _crap_summary(crap_gate.metrics, crap_gate.passed, crap_gate.reason)
-    mutation = _mutation_summary(mutation_gate)
+    crap = _crap_summary(crap_gate.metrics, crap_gate.passed, crap_gate.reason, thresholds.as_json()["crapMax"])
+    mutation = _mutation_summary(mutation_gate, thresholds.as_json()["mutationMin"])
     findings = (
         *_finding_identities(project, crap_gate.metrics, crap_gate.reason),
         *_mutation_findings(project, mutation_execution.records, mutation_gate.reason),
@@ -197,7 +217,11 @@ def _coverage_report(path: Path):
     return load_coverage_json(payload)
 
 
-def _measure_project(project: LoadedProject, report) -> tuple[CallableMetric, ...]:
+def _measure_project(
+    project: LoadedProject,
+    report,
+    thresholds: GateThresholds = DEFAULT_GATE,
+) -> tuple[CallableMetric, ...]:
     sources = {}
     for source in project.production_sources:
         try:
@@ -205,13 +229,17 @@ def _measure_project(project: LoadedProject, report) -> tuple[CallableMetric, ..
         except OSError as error:
             raise DependencyFailure("productionSourceUnavailable") from error
         sources[source.module_relative_path] = payload
-    return _measure_sources(sources, report)
+    return _measure_sources(sources, report, thresholds)
 
 
-def _measure_sources(sources, report) -> tuple[CallableMetric, ...]:
+def _measure_sources(
+    sources,
+    report,
+    thresholds: GateThresholds = DEFAULT_GATE,
+) -> tuple[CallableMetric, ...]:
     metrics = []
     for path, payload in sources.items():
-        metrics.extend(measure_source(payload, path, report))
+        metrics.extend(measure_source(payload, path, report, thresholds.crap_max))
     return tuple(metrics)
 
 
@@ -219,12 +247,14 @@ def _crap_summary(
     metrics: Sequence[CallableMetric],
     passed: bool,
     reason: str,
+    crap_max: str = DEFAULT_GATE.as_json()["crapMax"],
 ) -> dict:
     known = tuple(metric for metric in metrics if metric.crap.numerator is not None)
     maximum = max(known, key=_crap_fraction) if known else None
     numerator, denominator = _maximum_fraction(maximum)
     return {
         "callables": [_callable_record(metric) for metric in metrics],
+        "crapMax": crap_max,
         "maxDenominator": denominator,
         "maxNumerator": numerator,
         "pass": passed,
@@ -348,6 +378,7 @@ def _metric_finding(project: LoadedProject, metric: CallableMetric) -> FindingId
 def _redacted_summary(summary: dict) -> dict:
     return {
         "callableCount": len(summary["callables"]),
+        "crapMax": summary["crapMax"],
         "maxDenominator": summary["maxDenominator"],
         "maxNumerator": summary["maxNumerator"],
         "pass": summary["pass"],
@@ -356,10 +387,11 @@ def _redacted_summary(summary: dict) -> dict:
     }
 
 
-def _mutation_summary(gate) -> dict:
+def _mutation_summary(gate, mutation_min: str = DEFAULT_GATE.as_json()["mutationMin"]) -> dict:
     return {
         "counts": dict(gate.counts),
         "inScope": gate.in_scope,
+        "mutationMin": mutation_min,
         "killRateDenominator": _optional_decimal(gate.kill_rate_denominator),
         "killRateNumerator": _optional_decimal(gate.kill_rate_numerator),
         "killRatePercent": gate.kill_rate_percent,

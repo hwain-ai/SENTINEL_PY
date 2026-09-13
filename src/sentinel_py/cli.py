@@ -13,6 +13,7 @@ from .config import LoadedProject, UsageConfigError, load_project
 from .coverage import CoverageFormatError, MetricOrderingError
 from .crap import AnalysisError
 from .evidence import EvidenceError, read_history
+from .gate import GateInputError, load_gate
 from .mutation import MutationGateError
 from .mutmut_adapter import MutmutBridgeError
 from .quality import (
@@ -61,6 +62,8 @@ def _add_quality_command(
     parser.set_defaults(mode="strict")
     _add_output_selection(parser)
     parser.add_argument("--correlation-id")
+    parser.add_argument("--crap-max")
+    parser.add_argument("--mutation-min")
 
 
 def _add_doctor_command(subparsers: argparse._SubParsersAction) -> None:
@@ -98,7 +101,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     arguments = build_parser().parse_args(argv)
     try:
         return _dispatch(arguments)
-    except UsageConfigError as error:
+    except (UsageConfigError, GateInputError) as error:
         return _emit_error(arguments, USAGE_CONFIG_ERROR, error.code, "usageConfigError")
     except (
         BackendLockError,
@@ -123,8 +126,12 @@ def _dispatch(arguments: argparse.Namespace) -> int:
         return _history(arguments)
     if _quality_command_pending(arguments):
         return _pending(arguments)
+    gate = load_gate(
+        getattr(arguments, "crap_max", None),
+        getattr(arguments, "mutation_min", None),
+    )
     project = load_project(arguments.project, arguments.config, arguments.module)
-    return _dispatch_project_command(arguments, project)
+    return _dispatch_project_command(arguments, project, gate)
 
 
 def _quality_command_pending(arguments: argparse.Namespace) -> bool:
@@ -137,20 +144,22 @@ def _quality_command_pending(arguments: argparse.Namespace) -> bool:
 def _dispatch_project_command(
     arguments: argparse.Namespace,
     project: LoadedProject,
+    gate,
 ) -> int:
     if arguments.command == "doctor":
         return _emit_result(arguments, 0, doctor_result(project))
     if arguments.command == "check":
-        exit_code, result = run_strict_check(project, arguments.correlation_id)
+        exit_code, result = run_strict_check(project, arguments.correlation_id, gate)
         return _emit_result(arguments, exit_code, result)
     if arguments.command == "mutation":
         exit_code, result = run_strict_mutation(
             project,
             arguments.correlation_id,
+            gate,
         )
         return _emit_result(arguments, exit_code, result)
     crap_runner = run_local_crap if arguments.mode == "local" else run_strict_crap
-    exit_code, result = crap_runner(project, arguments.correlation_id)
+    exit_code, result = crap_runner(project, arguments.correlation_id, gate)
     return _emit_result(arguments, exit_code, result)
 
 

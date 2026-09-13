@@ -35,6 +35,7 @@ def _commit_worker(project_root: str, index: int) -> None:
     }
     summary = {
         "callableCount": 1,
+        "crapMax": "8",
         "maxDenominator": "1",
         "maxNumerator": "1",
         "pass": True,
@@ -909,6 +910,7 @@ class EvidenceStoreTests(unittest.TestCase):
         self.assertEqual(
             {
                 "callableCount": 3,
+                "crapMax": "8",
                 "maxDenominator": "7",
                 "maxNumerator": "11",
                 "pass": False,
@@ -917,6 +919,7 @@ class EvidenceStoreTests(unittest.TestCase):
             _crap_component(
                 {
                     "callableCount": 3,
+                    "crapMax": "8",
                     "maxDenominator": "7",
                     "maxNumerator": "11",
                     "pass": False,
@@ -926,11 +929,13 @@ class EvidenceStoreTests(unittest.TestCase):
         )
         self.assertEqual("1", _crap_component({
             "callableCount": 0,
+            "crapMax": "8",
             "pass": False,
             "unknownCount": 0,
         })["maxDenominator"])
         self.assertEqual("0", _crap_component({
             "callableCount": 0,
+            "crapMax": "8",
             "pass": False,
             "unknownCount": 0,
         })["maxNumerator"])
@@ -1079,12 +1084,14 @@ class EvidenceStoreTests(unittest.TestCase):
         summary = {
             "counts": counts,
             "inScope": 36,
+            "mutationMin": "100",
             "pass": False,
         }
         self.assertEqual(
             {
                 **counts,
                 "inScope": 36,
+                "mutationMin": "100",
                 "pass": False,
                 "unauthorizedExclusion": 0,
             },
@@ -1622,6 +1629,7 @@ class EvidenceStoreTests(unittest.TestCase):
 
         valid_crap = {
             "callableCount": 1,
+            "crapMax": "8",
             "maxDenominator": "1",
             "maxNumerator": "8",
             "pass": True,
@@ -1631,6 +1639,7 @@ class EvidenceStoreTests(unittest.TestCase):
         _validate_crap_component(
             {
                 "callableCount": 2,
+                "crapMax": "8",
                 "maxDenominator": "1",
                 "maxNumerator": "0",
                 "pass": False,
@@ -1640,6 +1649,7 @@ class EvidenceStoreTests(unittest.TestCase):
         _validate_crap_component(
             {
                 "callableCount": 0,
+                "crapMax": "8",
                 "maxDenominator": "1",
                 "maxNumerator": "0",
                 "pass": False,
@@ -1649,6 +1659,7 @@ class EvidenceStoreTests(unittest.TestCase):
         _validate_crap_component(
             {
                 "callableCount": 1,
+                "crapMax": "8",
                 "maxDenominator": "2",
                 "maxNumerator": "15",
                 "pass": True,
@@ -1658,6 +1669,7 @@ class EvidenceStoreTests(unittest.TestCase):
         _validate_crap_component(
             {
                 "callableCount": 1,
+                "crapMax": "8",
                 "maxDenominator": "1",
                 "maxNumerator": "9",
                 "pass": False,
@@ -1681,6 +1693,7 @@ class EvidenceStoreTests(unittest.TestCase):
 
         required_names = [
             "callableCount",
+            "crapMax",
             "maxDenominator",
             "maxNumerator",
             "pass",
@@ -1715,6 +1728,7 @@ class EvidenceStoreTests(unittest.TestCase):
             "compileError": 0,
             "ignored": 0,
             "inScope": 1,
+            "mutationMin": "100",
             "killed": 1,
             "pass": True,
             "pending": 0,
@@ -1873,6 +1887,7 @@ class EvidenceStoreTests(unittest.TestCase):
                 "compileError": 0,
                 "ignored": 0,
                 "inScope": in_scope,
+                "mutationMin": "100",
                 "killed": killed,
                 "pass": passed,
                 "pending": 0,
@@ -1995,6 +2010,7 @@ class EvidenceStoreTests(unittest.TestCase):
         self.assertEqual(
             {
                 "callableCount": 1,
+                "crapMax": "8",
                 "maxDenominator": "1",
                 "maxNumerator": "1",
                 "pass": True,
@@ -2023,6 +2039,7 @@ class EvidenceStoreTests(unittest.TestCase):
             "components": {
                 "crap": {
                     "callableCount": 1,
+                    "crapMax": "8",
                     "maxDenominator": "1",
                     "maxNumerator": "8",
                     "pass": True,
@@ -2032,6 +2049,7 @@ class EvidenceStoreTests(unittest.TestCase):
                     "compileError": 0,
                     "ignored": 0,
                     "inScope": 1,
+                    "mutationMin": "100",
                     "killed": 1,
                     "pass": True,
                     "pending": 0,
@@ -2073,11 +2091,11 @@ class EvidenceStoreTests(unittest.TestCase):
             _project_state_hmac(keys),
         )
         self.assertEqual(
-            "7a784069c2ca3036f4c7d6214d5fba466f9d9f8b848033f471bdccb181419faa",
+            "93a268af3b825df203d008c9fb475defad0d85e9db0f3855e27f7266d4527caf",
             hashlib.sha256(_canonical_json(body)).hexdigest(),
         )
         self.assertEqual(
-            "4542679c4ce361bd22a29d30a2f4bfd6149a8e2cbd6ef15984cfa1ff697cae32",
+            "1aaaa38f58a49f6d64bcda9f05037e4432c88766f02a3000f8d9ef520fffc66e",
             _namespaced_document_hmac(
                 keys.cleanup_lease_key,
                 _EVIDENCE_KEY_NAMESPACE,
@@ -2581,6 +2599,7 @@ class EvidenceStoreTests(unittest.TestCase):
         mutation = {
             "counts": counts,
             "inScope": 1,
+            "mutationMin": "100",
             "killRateDenominator": "1",
             "killRateNumerator": "1",
             "killRatePercent": "100",
@@ -2627,6 +2646,7 @@ class EvidenceStoreTests(unittest.TestCase):
     def _summary() -> dict:
         return {
             "callableCount": 1,
+            "crapMax": "8",
             "maxDenominator": "1",
             "maxNumerator": "1",
             "pass": True,

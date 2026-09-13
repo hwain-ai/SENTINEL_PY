@@ -8,6 +8,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from sentinel_py.gate import DEFAULT_GATE
+
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
@@ -50,13 +52,14 @@ class MutationQualityTests(unittest.TestCase):
             )
         correlation.assert_called_once_with("requested-correlation", "local-run")
         coverage_report.assert_called_once_with(project.module.coverage_report)
-        measure_project.assert_called_once_with(project, local_report)
+        measure_project.assert_called_once_with(project, local_report, DEFAULT_GATE)
         complete.assert_called_once_with(
             project,
             local_metrics,
             "local",
             "local-correlation",
             "local-run",
+            DEFAULT_GATE,
         )
 
         with (
@@ -89,13 +92,14 @@ class MutationQualityTests(unittest.TestCase):
         correlation.assert_called_once_with("requested-correlation", "strict-run")
         fresh_coverage.assert_called_once_with(project)
         load_coverage.assert_called_once_with(b"fresh")
-        measure_sources.assert_called_once_with(execution.sources, strict_report)
+        measure_sources.assert_called_once_with(execution.sources, strict_report, DEFAULT_GATE)
         complete.assert_called_once_with(
             project,
             strict_metrics,
             "strict",
             "strict-correlation",
             "strict-run",
+            DEFAULT_GATE,
         )
 
     def test_complete_crap_joins_gate_reason_findings_and_redacted_evidence(self):
@@ -142,6 +146,7 @@ class MutationQualityTests(unittest.TestCase):
                 "strict",
                 "correlation",
                 "run-id",
+                DEFAULT_GATE,
             )
 
         self.assertEqual(2, exit_code)
@@ -153,11 +158,12 @@ class MutationQualityTests(unittest.TestCase):
             },
             result,
         )
-        evaluate.assert_called_once_with(metrics)
+        evaluate.assert_called_once_with(metrics, DEFAULT_GATE.crap_max)
         summarize.assert_called_once_with(
             gate_metrics,
             False,
             "crapThresholdExceeded",
+            "8",
         )
         run_record.assert_called_once_with(
             "crap",
@@ -232,6 +238,7 @@ class MutationQualityTests(unittest.TestCase):
                     {"id": "unknown"},
                 ],
                 "maxDenominator": "4",
+                "crapMax": "8",
                 "maxNumerator": "31",
                 "pass": False,
                 "reason": "coverageUnknown",
@@ -243,6 +250,7 @@ class MutationQualityTests(unittest.TestCase):
             {
                 "callableCount": 3,
                 "maxDenominator": "4",
+                "crapMax": "8",
                 "maxNumerator": "31",
                 "pass": False,
                 "reason": "coverageUnknown",
@@ -368,6 +376,7 @@ class MutationQualityTests(unittest.TestCase):
             measure_sources.assert_called_once_with(
                 {"src/first.py": b"first", "src/second.py": b"second"},
                 parsed_report,
+                DEFAULT_GATE,
             )
 
             with self.assertRaises(DependencyFailure) as stopped:
@@ -574,6 +583,7 @@ class MutationQualityTests(unittest.TestCase):
                 "counts": {"killed": 3, "survived": 1},
                 "inScope": 4,
                 "killRateDenominator": "4",
+                "mutationMin": "100",
                 "killRateNumerator": "3",
                 "killRatePercent": "75.000000",
                 "killed": 3,
@@ -727,7 +737,7 @@ class MutationQualityTests(unittest.TestCase):
         uuid4.assert_called_once_with()
         correlation.assert_called_once_with(correlation_id, "run-uuid")
         mutation_run.assert_called_once_with(project)
-        evaluate_gate.assert_called_once_with(candidates, records)
+        evaluate_gate.assert_called_once_with(candidates, records, mutation_min=DEFAULT_GATE.mutation_min)
         run_record.assert_called_once_with(
             "mutation",
             "strict",
@@ -735,7 +745,7 @@ class MutationQualityTests(unittest.TestCase):
             "approved-correlation",
             "passed",
         )
-        summarize.assert_called_once_with(gate)
+        summarize.assert_called_once_with(gate, "100")
         find.assert_called_once_with(project, records, "passed")
         redact.assert_called_once_with(summary)
         commit.assert_called_once_with(project.project_root, run, redacted, findings)
@@ -854,10 +864,10 @@ class MutationQualityTests(unittest.TestCase):
             correlation.assert_called_once_with(correlation_id, "run-uuid")
             fresh_coverage.assert_called_once_with(project)
             load_coverage.assert_called_once_with(coverage_execution.report)
-            measure_sources.assert_called_once_with(coverage_sources, parsed_report)
-            crap_gate_evaluation.assert_called_once_with(metrics)
+            measure_sources.assert_called_once_with(coverage_sources, parsed_report, DEFAULT_GATE)
+            crap_gate_evaluation.assert_called_once_with(metrics, DEFAULT_GATE.crap_max)
             mutation_run.assert_called_once_with(project)
-            mutation_gate_evaluation.assert_called_once_with(candidates, records)
+            mutation_gate_evaluation.assert_called_once_with(candidates, records, mutation_min=DEFAULT_GATE.mutation_min)
             run_record.assert_called_once_with(
                 "check",
                 "strict",
@@ -865,8 +875,8 @@ class MutationQualityTests(unittest.TestCase):
                 "approved-correlation",
                 expected_status,
             )
-            summarize_crap.assert_called_once_with(metrics, crap_passed, "crap-reason")
-            summarize_mutation.assert_called_once_with(mutation_gate)
+            summarize_crap.assert_called_once_with(metrics, crap_passed, "crap-reason", "8")
+            summarize_mutation.assert_called_once_with(mutation_gate, "100")
             find_crap.assert_called_once_with(project, metrics, "crap-reason")
             find_mutation.assert_called_once_with(project, records, "mutation-reason")
             redact_crap.assert_called_once_with(crap_summary)

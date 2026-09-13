@@ -191,6 +191,7 @@ class CoverageEvidenceTests(unittest.TestCase):
             summary = _redacted_summary(
                 {
                     "callables": [{}],
+                    "crapMax": "8",
                     "maxDenominator": None,
                     "maxNumerator": None,
                     "pass": False,

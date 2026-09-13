@@ -17,7 +17,18 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from fractions import Fraction
 from typing import Iterator, Mapping, Sequence
+
+from ..gate import (
+    DEFAULT_CRAP_MAX,
+    DEFAULT_MUTATION_MIN,
+    GateInputError,
+    crap_passes,
+    kill_rate_passes,
+    parse_crap_max,
+    parse_mutation_min,
+)
 
 
 _STATE_VERSION = "state-v1"
@@ -56,6 +67,14 @@ _EXIT_CODES = {
     "backendError": 6,
     "evidenceError": 7,
     "cancelled": 8,
+}
+_CRAP_COMPONENT_FIELDS = {
+    "callableCount",
+    "crapMax",
+    "maxDenominator",
+    "maxNumerator",
+    "pass",
+    "unknownCount",
 }
 _MUTATION_COMPONENT_COUNTS = (
     "killed",
@@ -719,6 +738,7 @@ def _crap_component(summary: Mapping[str, object]) -> dict:
     denominator = summary.get("maxDenominator")
     return {
         "callableCount": _safe_uint(summary.get("callableCount")),
+        "crapMax": _threshold_text(summary.get("crapMax", DEFAULT_CRAP_MAX), parse_crap_max),
         "maxDenominator": _positive_decimal(denominator or "1"),
         "maxNumerator": _nonnegative_decimal(numerator or "0"),
         "pass": _boolean(summary.get("pass")),
@@ -734,6 +754,9 @@ def _mutation_component(summary: Mapping[str, object]) -> dict:
     result.update(
         {
             "inScope": _safe_uint(summary.get("inScope")),
+            "mutationMin": _threshold_text(
+                summary.get("mutationMin", DEFAULT_MUTATION_MIN), parse_mutation_min
+            ),
             "pass": _boolean(summary.get("pass")),
             "unauthorizedExclusion": _safe_uint(
                 summary.get("unauthorizedExclusion", 0)
@@ -1140,13 +1163,7 @@ def _validate_component_values(components: Mapping[str, object]) -> None:
 
 
 def _validate_crap_component(value: object) -> None:
-    if not isinstance(value, dict) or set(value) != {
-        "callableCount",
-        "maxDenominator",
-        "maxNumerator",
-        "pass",
-        "unknownCount",
-    }:
+    if not isinstance(value, dict) or set(value) != _CRAP_COMPONENT_FIELDS:
         raise EvidenceError("evidenceInvalid")
     expected = _crap_component(value)
     if expected != value or not _valid_crap_semantics(value):
@@ -1158,10 +1175,11 @@ def _valid_crap_semantics(value: Mapping[str, object]) -> bool:
     denominator = int(value["maxDenominator"])
     no_known_callables = value["callableCount"] == value["unknownCount"]
     zero_maximum = numerator == 0 and denominator == 1
+    crap_max = _threshold_fraction(value["crapMax"], parse_crap_max)
     expected_pass = (
         value["callableCount"] > 0
         and value["unknownCount"] == 0
-        and numerator <= 8 * denominator
+        and crap_passes(numerator, denominator, crap_max)
     )
     return (
         value["unknownCount"] <= value["callableCount"]
@@ -1175,6 +1193,7 @@ def _validate_mutation_component(value: object) -> None:
     fields = {
         *_MUTATION_COMPONENT_COUNTS,
         "inScope",
+        "mutationMin",
         "pass",
         "unauthorizedExclusion",
     }
@@ -1189,12 +1208,25 @@ def _validate_mutation_component(value: object) -> None:
 
 def _valid_mutation_semantics(value: Mapping[str, object]) -> bool:
     state_total = sum(value[name] for name in _MUTATION_COMPONENT_COUNTS)
+    mutation_min = _threshold_fraction(value["mutationMin"], parse_mutation_min)
     expected_pass = (
         value["inScope"] > 0
-        and value["killed"] == value["inScope"]
         and value["unauthorizedExclusion"] == 0
+        and kill_rate_passes(value["killed"], value["inScope"], mutation_min)
     )
     return state_total == value["inScope"] and value["pass"] is expected_pass
+
+
+def _threshold_fraction(value: object, parser) -> Fraction:
+    try:
+        return parser(value)
+    except GateInputError as error:
+        raise EvidenceError("evidenceInvalid") from error
+
+
+def _threshold_text(value: object, parser) -> str:
+    _threshold_fraction(value, parser)
+    return value
 
 
 def _validate_run_path(path: Path, document: dict) -> None:
