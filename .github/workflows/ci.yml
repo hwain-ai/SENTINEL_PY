@@ -1,0 +1,24 @@
+# Python 검사기 자체 시험. sentinel-tool/setup.sh 가 잠금 파일의 주소·지문으로 Python·uv·의존성을 받는다.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore the sealed toolchain
+        uses: actions/cache@v4
+        with:
+          path: .toolchain
+          key: py-toolchain-${{ runner.os }}-${{ hashFiles('toolchain.lock.json', 'uv.lock', 'pyproject.toml') }}
+      - name: Bootstrap the checker (locked Python, uv and dependencies)
+        run: sentinel-tool/setup.sh
+      - name: Run the checker's tests
+        run: ./scripts/uv.sh run python -B -m unittest discover -s tests -v
