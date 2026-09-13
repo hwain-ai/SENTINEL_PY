@@ -1,5 +1,5 @@
 .toolchain/
 .sentinel/
 mutants/
-.coverage
-coverage.json
+/.coverage
+/coverage.json
