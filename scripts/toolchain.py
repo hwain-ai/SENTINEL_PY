@@ -28,9 +28,13 @@ import sys
 # Callers pass -I -B as well: -I makes Python ignore PYTHONDONTWRITEBYTECODE, so only -B covers startup imports.
 sys.dont_write_bytecode = True
 
+import os  # noqa: E402
+
+# Everything the launcher creates or lets a child create is private, as the shell launchers had it.
+os.umask(0o077)
+
 import argparse  # noqa: E402
 import hashlib  # noqa: E402
-import os
 import platform as platform_module
 import shutil
 import subprocess
