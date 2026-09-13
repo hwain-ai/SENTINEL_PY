@@ -4,3 +4,4 @@ mutants/
 /.coverage
 /coverage.json
 .claude/
+__pycache__/
