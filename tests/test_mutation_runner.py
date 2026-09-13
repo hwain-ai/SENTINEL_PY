@@ -570,7 +570,7 @@ class BackendConfigTests(unittest.TestCase):
         from sentinel_py.runner.coverage_backend import _execute_coverage
 
         with tempfile.TemporaryDirectory(prefix="sentinel-coverage-binding-") as directory:
-            root = Path(directory)
+            root = Path(directory).resolve()
             cases = (
                 ("src", ("src",), "src"),
                 ("flat", ("flat",), "flat"),
@@ -1001,7 +1001,7 @@ class BackendConfigTests(unittest.TestCase):
         from sentinel_py.runner import mutation_backend
 
         with tempfile.TemporaryDirectory(prefix="sentinel-pristine-observer-") as directory:
-            pristine = Path(directory) / "project"
+            pristine = Path(directory).resolve() / "project"
             relative_root = Path("src/sentinel_py/runner")
             pristine_runner = pristine / relative_root
             mutated_runner = pristine / "mutants" / relative_root
@@ -3376,7 +3376,7 @@ class PytestObservationTests(unittest.TestCase):
             return "\n".join(lines) + "\n"
 
         with tempfile.TemporaryDirectory(prefix="sentinel-source-binding-") as directory:
-            root = Path(directory)
+            root = Path(directory).resolve()
             cases = (
                 ("src", ("src",), "src"),
                 ("flat", ("flat",), "flat"),

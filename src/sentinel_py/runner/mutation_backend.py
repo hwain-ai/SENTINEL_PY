@@ -642,7 +642,9 @@ def _terminate_process_group(process: subprocess.Popen) -> None:
 def _signal_process_group(process_group: int, requested_signal: signal.Signals) -> None:
     try:
         os.killpg(process_group, requested_signal)
-    except ProcessLookupError:
+    except (ProcessLookupError, PermissionError):
+        # Gone already, or (macOS) the leader is a zombie that only reaping can remove; the
+        # caller reaps through communicate() and kills the child directly if it still lives.
         return
 
 

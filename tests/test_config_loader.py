@@ -102,7 +102,7 @@ class ConfigLoaderTests(unittest.TestCase):
         from sentinel_py.config.loader import _config_path
 
         with tempfile.TemporaryDirectory(prefix="sentinel-config-path-") as directory:
-            project = Path(directory)
+            project = Path(directory).resolve()
             resolution_error = OSError("denied")
             with (
                 patch.object(Path, "resolve", side_effect=resolution_error),
@@ -278,7 +278,7 @@ class ConfigLoaderTests(unittest.TestCase):
         from sentinel_py.config.loader import _matching_test_sources
 
         with tempfile.TemporaryDirectory(prefix="sentinel-matching-tests-") as directory:
-            project = Path(directory)
+            project = Path(directory).resolve()
             root = project / "tests"
             root.mkdir()
             expected = root / "test_subject.py"

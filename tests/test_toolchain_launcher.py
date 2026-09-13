@@ -192,7 +192,7 @@ class LauncherProcessTests(unittest.TestCase):
     # ---------------------------------------------------------------- helpers
 
     def _copy_launcher_repository(self) -> Path:
-        temporary = Path(tempfile.mkdtemp(prefix="sentinel-py-launcher-"))
+        temporary = Path(tempfile.mkdtemp(prefix="sentinel-py-launcher-")).resolve()
         self.addCleanup(shutil.rmtree, temporary, True)
         repository = temporary / "repository"
         scripts = repository / "scripts"

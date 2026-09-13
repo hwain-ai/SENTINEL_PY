@@ -6,6 +6,8 @@ description = "Native Python callable CRAP analysis core"
 requires-python = "==3.12.13"
 dependencies = [
     "coverage==7.16.0",
+    # libcst 1.9 dropped Intel macOS wheels; 1.8.6 is the last release with wheels for every supported platform.
+    "libcst==1.8.6",
     "mutmut==3.7.0",
 ]
 
