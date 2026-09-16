@@ -18,6 +18,8 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
+      - name: Verify the tool adapter response contract
+        run: python3 -I -B tests/test_tool_adapter.py
       - name: Restore the sealed toolchain
         uses: actions/cache@v4
         with:

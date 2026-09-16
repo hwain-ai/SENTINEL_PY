@@ -35,8 +35,8 @@ def main() -> int:
     response = {key: request.get(key) for key in IDENTITY_KEYS}
     response["toolVersion"] = manifest["version"]
 
-    def finish(exit_code: int) -> int:
-        status = STATUS_BY_EXIT.get(exit_code, "backendError")
+    def finish(exit_code: int, *, no_changes: bool = False) -> int:
+        status = "noChanges" if no_changes else STATUS_BY_EXIT.get(exit_code, "backendError")
         exit_code = 6 if status == "backendError" else exit_code
         response.update(status=status, exitCode=exit_code, passed=status == "passed")
         sys.stdout.write(json.dumps(response, separators=(",", ":")) + "\n")
@@ -79,6 +79,18 @@ def main() -> int:
                 )
             except OSError:
                 return finish(5)
+        if completed.returncode in (0, 2):
+            try:
+                result = json.loads(result_file.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                return finish(6)
+            if not isinstance(result, dict) or not isinstance(result.get("run"), dict):
+                return finish(6)
+            expected_status = "passed" if completed.returncode == 0 else "qualityFailed"
+            if result["run"].get("terminalStatus") != expected_status:
+                return finish(6)
+            if result.get("changedScope") == "empty":
+                return finish(0, no_changes=True) if completed.returncode == 0 and "changedFiles" in request else finish(6)
     return finish(completed.returncode)
 
 

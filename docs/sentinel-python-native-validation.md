@@ -256,7 +256,7 @@ Python의 내부 파일 별칭 1,048개는 원래 경로에 대상과 같은 내
 1. 완료: 내장 모듈 진단 수정과 독립 v3 승인 후 새 컨테이너에서 고정 SDK 버전·표준 라이브러리·빈 가상환경, 종료 뒤 입력 보존·회수를 확인했다. 상세 근거는 아래 후속 실행 기록을 따른다.
 2. 완료: 실행 환경·검사기 wheel·의존성 wheel을 읽기 전용으로 연결하고, 제한된 임시 공간에 새 가상환경을 만들어 설치했다. 다음에는 공개 프로젝트 전체 소스와 별도 빌드·시험 도구도 같은 경계로 연결한다. 현재 검사기는 자식 실행의 환경 변수를 정리하므로 임의 모듈 검색 경로만 추가하는 방법으로 설치를 대신하지 않는다. 이번 호스트의 임시 절대 경로를 공개 연결 도구에 넣지 않는다.
 3. 원래 빌드·전체 시험297개 두 번의 기준 결과와 SENTINEL의 coverage·mutation·결과 기록을 비교하고 Python 전용 격리·중단·복구를 확인한다. 원본 전체 파일의 역할 분류는 기존 규칙과 대조하며 문서 설정 파일을 임의로 제외하지 않는다. 합성 doctor 입력은 이 비교 대상이 아니다.
-4. 통합 명령의 입력·시간 예산·정리 책임을 연결하고 운영 승인 뒤 Codex·Claude Code 설치 플러그인에 연결한다. 공통 부모의 직접 실행·정리 책임은 후속 [Go 통합 연결](https://github.com/hwain-ai/SENTINEL_GO/blob/main/docs/sentinel-go-native-validation.md#설치된-통합-명령의-go-연결-검증)에서 검증했으며 Python 연결은 아직 미완료다. 과거 [실행 경계 검토](https://github.com/hwain-ai/SENTINEL/blob/main/docs/references/sentinel-native-connection-boundary.md)의 미결정 상태를 현재 공통 구현의 부재로 해석하지 않는다. 2026-09-10 사용자가 부모 직접 관리와 Java·Python의 공식 Maven Central·PyPI 최초 준비를 승인했으며 더 이상 답변 대기가 아니다.
+4. 통합 명령의 입력·시간 예산·정리 책임을 연결하고 운영 승인 뒤 Codex·Claude Code 설치 플러그인에 연결한다. 과거 [실행 경계 검토](https://github.com/hwain-ai/SENTINEL/blob/main/docs/references/sentinel-native-connection-boundary.md)의 미결정 상태를 현재 공통 구현의 부재로 해석하지 않는다. 2026-09-10 사용자가 부모 직접 관리와 Java·Python의 공식 Maven Central·PyPI 최초 준비를 승인했으며 더 이상 답변 대기가 아니다.
 
 ## SDK 실제 후속 실행 완료
 
