@@ -583,7 +583,7 @@ class MutationQualityTests(unittest.TestCase):
                 "counts": {"killed": 3, "survived": 1},
                 "inScope": 4,
                 "killRateDenominator": "4",
-                "mutationMin": "100",
+                "mutationMin": "90",
                 "killRateNumerator": "3",
                 "killRatePercent": "75.000000",
                 "killed": 3,
@@ -745,7 +745,7 @@ class MutationQualityTests(unittest.TestCase):
             "approved-correlation",
             "passed",
         )
-        summarize.assert_called_once_with(gate, "100")
+        summarize.assert_called_once_with(gate, "90")
         find.assert_called_once_with(project, records, "passed")
         redact.assert_called_once_with(summary)
         commit.assert_called_once_with(project.project_root, run, redacted, findings)
@@ -876,7 +876,7 @@ class MutationQualityTests(unittest.TestCase):
                 expected_status,
             )
             summarize_crap.assert_called_once_with(metrics, crap_passed, "crap-reason", "8")
-            summarize_mutation.assert_called_once_with(mutation_gate, "100")
+            summarize_mutation.assert_called_once_with(mutation_gate, "90")
             find_crap.assert_called_once_with(project, metrics, "crap-reason")
             find_mutation.assert_called_once_with(project, records, "mutation-reason")
             redact_crap.assert_called_once_with(crap_summary)

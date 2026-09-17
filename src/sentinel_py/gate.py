@@ -13,7 +13,7 @@ from fractions import Fraction
 
 THRESHOLD_PATTERN = re.compile(r"^(0|[1-9][0-9]*)(\.[0-9]{1,2})?$")
 DEFAULT_CRAP_MAX = "8"
-DEFAULT_MUTATION_MIN = "100"
+DEFAULT_MUTATION_MIN = "90"
 
 
 class GateInputError(ValueError):

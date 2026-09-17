@@ -22,7 +22,7 @@ class MutationGateTests(unittest.TestCase):
         self.assertEqual(expected, raised.exception.code)
         self.assertEqual(expected, str(raised.exception))
 
-    def test_all_planned_mutants_killed_is_the_only_pass(self):
+    def test_all_planned_mutants_killed_passes(self):
         result = evaluate_mutation_gate(
             ("m-1", "m-2"),
             (MutantRecord("m-2", "killed"), MutantRecord("m-1", "killed")),

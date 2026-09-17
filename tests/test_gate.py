@@ -44,7 +44,7 @@ def _records(**counts):
 class GateParsingTests(unittest.TestCase):
     def test_defaults_match_the_shared_golden_vector(self):
         self.assertEqual(GOLDEN["defaults"], DEFAULT_GATE.as_json())
-        self.assertEqual(GateThresholds(Fraction(8), Fraction(100)), load_gate(None, None))
+        self.assertEqual(GateThresholds(Fraction(8), Fraction(90)), load_gate(None, None))
 
     def test_text_is_read_as_an_exact_fraction_and_rendered_back(self):
         gate = load_gate("8.50", "99.9")
@@ -89,6 +89,14 @@ class CrapThresholdTests(unittest.TestCase):
 
 
 class MutationThresholdTests(unittest.TestCase):
+    def test_default_ninety_percent_boundary_and_explicit_full_kill_rate(self):
+        for killed, survived, passed in ((9, 1, True), (8999, 1001, False)):
+            records = _records(killed=killed, survived=survived)
+            candidates = tuple(r.candidate_id for r in records)
+            with self.subTest(killed=killed, survived=survived):
+                self.assertEqual(passed, evaluate_mutation_gate(candidates, records).passed)
+                self.assertFalse(evaluate_mutation_gate(candidates, records, 0, Fraction(100)).passed)
+
     def test_golden_mutation_cases_follow_the_minimum_kill_rate(self):
         for case in GOLDEN["mutationCases"]:
             with self.subTest(case=case["id"]):
@@ -101,7 +109,7 @@ class MutationThresholdTests(unittest.TestCase):
                 )
                 self.assertEqual(case["expected"]["pass"], result.passed)
 
-    def test_default_minimum_keeps_the_killed_only_reason(self):
+    def test_below_default_minimum_keeps_the_non_killed_reason(self):
         records = _records(killed=3, survived=1)
         result = evaluate_mutation_gate(tuple(r.candidate_id for r in records), records)
         self.assertEqual(("nonKilledMutant", "75"), (result.reason, result.kill_rate_percent))

@@ -3,7 +3,7 @@
   "thresholdPattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,2})?$",
   "defaults": {
     "crapMax": "8",
-    "mutationMin": "100"
+    "mutationMin": "90"
   },
   "crapCases": [
     {
@@ -45,11 +45,35 @@
   ],
   "mutationCases": [
     {
+      "id": "default-ninety-percent-boundary",
+      "counts": {"killed": 9, "survived": 1, "uncovered": 0, "timedOut": 0, "compileError": 0, "runtimeError": 0, "pending": 0, "ignored": 0, "toolError": 0},
+      "inScope": 10,
+      "unauthorizedExclusion": 0,
+      "mutationMin": "90",
+      "expected": {"pass": true}
+    },
+    {
+      "id": "below-default-ninety-percent",
+      "counts": {"killed": 8999, "survived": 1001, "uncovered": 0, "timedOut": 0, "compileError": 0, "runtimeError": 0, "pending": 0, "ignored": 0, "toolError": 0},
+      "inScope": 10000,
+      "unauthorizedExclusion": 0,
+      "mutationMin": "90",
+      "expected": {"pass": false}
+    },
+    {
+      "id": "explicit-full-kill-rate-still-fails",
+      "counts": {"killed": 9, "survived": 1, "uncovered": 0, "timedOut": 0, "compileError": 0, "runtimeError": 0, "pending": 0, "ignored": 0, "toolError": 0},
+      "inScope": 10,
+      "unauthorizedExclusion": 0,
+      "mutationMin": "100",
+      "expected": {"pass": false}
+    },
+    {
       "id": "all-killed-default",
       "counts": {"killed": 4, "survived": 0, "uncovered": 0, "timedOut": 0, "compileError": 0, "runtimeError": 0, "pending": 0, "ignored": 0, "toolError": 0},
       "inScope": 4,
       "unauthorizedExclusion": 0,
-      "mutationMin": "100",
+      "mutationMin": "90",
       "expected": {"pass": true}
     },
     {
@@ -57,7 +81,7 @@
       "counts": {"killed": 3, "survived": 1, "uncovered": 0, "timedOut": 0, "compileError": 0, "runtimeError": 0, "pending": 0, "ignored": 0, "toolError": 0},
       "inScope": 4,
       "unauthorizedExclusion": 0,
-      "mutationMin": "100",
+      "mutationMin": "90",
       "expected": {"pass": false}
     },
     {

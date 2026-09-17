@@ -177,7 +177,7 @@ def _gate_reason(
         return "zeroMutants"
     if unauthorized_exclusion != 0:
         return "unauthorizedExclusion"
-    # With the default 100 percent this is exactly killed != in_scope.
+    # With an explicit 100 percent this is exactly killed != in_scope.
     if not kill_rate_passes(killed, in_scope, mutation_min):
         return "nonKilledMutant"
     return "passed"
