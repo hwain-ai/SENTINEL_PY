@@ -1,0 +1,14 @@
+#!/bin/sh
+# Git provides the exact commit updates on stdin; preserve it for the linter.
+set -eu
+root=$(git rev-parse --show-toplevel)
+for candidate in python3 python; do
+    if command -v "$candidate" >/dev/null 2>&1 && "$candidate" -c 'import sys; sys.exit(sys.version_info < (3, 9))' >/dev/null 2>&1; then
+        exec "$candidate" "$root/scripts/docs_lint.py" --root "$root" --pre-push --remote "${1:-}"
+    fi
+done
+if command -v py >/dev/null 2>&1 && py -3 -c 'import sys; sys.exit(sys.version_info < (3, 9))' >/dev/null 2>&1; then
+    exec py -3 "$root/scripts/docs_lint.py" --root "$root" --pre-push --remote "${1:-}"
+fi
+echo "docs-lint: Python 3.9 or newer is required before pushing." >&2
+exit 1

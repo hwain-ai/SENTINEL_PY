@@ -18,14 +18,17 @@ import time
 import tomllib
 import uuid
 from dataclasses import dataclass, field
+from functools import partial
 from pathlib import Path
 from typing import Mapping, Sequence
 
 from ..backend_lock import verify_backend_lock
 from ..config import LoadedProject
+from ..crap import analyze_source
 from ..mutation import MutantRecord
 from ..mutmut_adapter import (
     enumerate_candidates,
+    candidate_details,
     load_results,
     read_raw_exit_codes,
 )
@@ -37,6 +40,7 @@ from .pytest_reporter import (
     mutmut_report_nonce,
     mutmut_report_path,
 )
+from .child_lifetime import arm_parent_death
 
 
 _OBSERVER_MODULE = "_sentinel_pytest_observer_v1"
@@ -69,6 +73,7 @@ class MutationExecution:
 
     candidate_ids: tuple[str, ...]
     records: tuple[MutantRecord, ...]
+    details: dict = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -129,9 +134,12 @@ def _run_in_temporary_snapshot(project: LoadedProject) -> MutationExecution:
         _prepare_observer(temporary_root)
         sources = _source_bytes(project)
         candidates = enumerate_candidates(sources)
+        selected, details = _candidate_selection(project, sources, candidates)
         _require_two_baselines(project, snapshot, temporary_root)
+        if not selected:
+            return MutationExecution((), (), {})
         _install_backend_config(project, snapshot)
-        backend_reports = _run_backend(snapshot, temporary_root)
+        backend_reports = _run_backend(snapshot, temporary_root, selected) if getattr(project, "selected_functions", ()) else _run_backend(snapshot, temporary_root)
         meta_paths = tuple(sorted((snapshot / "mutants").rglob("*.py.meta")))
         raw_results = read_raw_exit_codes(meta_paths)
         _require_raw_candidate_set(candidates, raw_results)
@@ -143,7 +151,32 @@ def _run_in_temporary_snapshot(project: LoadedProject) -> MutationExecution:
             backend_reports,
         )
         records = load_results(candidates, meta_paths, failure_states)
-        return MutationExecution(candidates, records)
+        selected_records = _selected_records(records, selected) if getattr(project, "selected_functions", ()) else records
+        return MutationExecution(selected, selected_records, {key: details[key] for key in selected})
+
+
+def _selected_records(records, selected):
+    return tuple(record for record in records if record.candidate_id in selected)
+
+
+def _candidate_selection(project, sources, candidates):
+    details = candidate_details(sources)
+    for source in project.production_sources:
+        path = source.path.relative_to(project.project_root).as_posix()
+        definitions = analyze_source(sources[path], source.module_relative_path)
+        _assign_owners(details, path, definitions)
+    selected = tuple(key for key in candidates if not project.selected_functions or details[key].get("callableId") in project.selected_functions)
+    return selected, details
+
+
+def _assign_owners(details, path, definitions):
+    for detail in details.values():
+        if detail["file"] != path:
+            continue
+        owners = [item for item in definitions if item.source_range.start_byte <= detail["sourceStartByte"] < item.source_range.end_byte]
+        if owners:
+            owner = min(owners, key=lambda item: item.source_range.end_byte - item.source_range.start_byte)
+            detail.update(function=owner.qualified_name, callableId=owner.callable_id)
 
 
 def _copy_project(project_root: Path, snapshot: Path) -> None:
@@ -217,6 +250,8 @@ def _source_config_paths(project: LoadedProject) -> tuple[str, ...]:
 
 
 def _test_config_paths(project: LoadedProject) -> tuple[str, ...]:
+    if getattr(project, "selected_tests", ()):
+        return project.selected_tests
     return tuple(
         path.relative_to(project.project_root).as_posix()
         for path in project.module.test_roots
@@ -332,18 +367,20 @@ def _require_two_baselines(
 def _pytest_selection(project: LoadedProject) -> tuple[str, ...]:
     if project.module.test_command != ("python", "-m", "pytest"):
         raise BaselineFailure("unsupportedTestCommand")
+    if getattr(project, "selected_tests", ()):
+        return project.selected_tests
     return tuple(
         path.relative_to(project.project_root).as_posix()
         for path in project.module.test_roots
     )
 
 
-def _run_backend(snapshot: Path, temporary_root: Path) -> _BackendReports:
+def _run_backend(snapshot: Path, temporary_root: Path, selected: Sequence[str] = ()) -> _BackendReports:
     report_root = temporary_root / "mutmut-reports"
     report_root.mkdir(mode=0o700)
     run_nonce = str(uuid.uuid4())
     assertion_key = secrets.token_bytes(32)
-    command = (sys.executable, "-m", "mutmut", "run", "--max-children", "1")
+    command = (sys.executable, str(Path(__file__).with_name("mutmut_unlimited.py")), "run", "--max-children", "1", *selected)
     environment = _mutation_test_environment(temporary_root, snapshot)
     environment.update(
         {
@@ -352,16 +389,7 @@ def _run_backend(snapshot: Path, temporary_root: Path) -> _BackendReports:
             "SENTINEL_PYTEST_HMAC_KEY": assertion_key.hex(),
         }
     )
-    result = _run_process_with_progress(
-        command,
-        snapshot,
-        environment,
-        report_root,
-        startup_timeout_seconds=_BACKEND_STARTUP_TIMEOUT_SECONDS,
-        idle_timeout_seconds=_BACKEND_IDLE_TIMEOUT_SECONDS,
-        absolute_timeout_seconds=_BACKEND_ABSOLUTE_TIMEOUT_SECONDS,
-        poll_seconds=_BACKEND_POLL_SECONDS,
-    )
+    result = _run_process(command, snapshot, environment)
     if result.returncode != 0:
         raise MutationBackendError("backendProcessFailed")
     return _BackendReports(report_root, run_nonce, assertion_key)
@@ -502,7 +530,7 @@ def _run_process(
     cwd: Path,
     environment: Mapping[str, str],
     *,
-    timeout_seconds: float = 300,
+    timeout_seconds: float | None = None,
 ) -> subprocess.CompletedProcess:
     process = _start_process(command, cwd, environment)
     try:
@@ -510,6 +538,9 @@ def _run_process(
     except subprocess.TimeoutExpired as error:
         _terminate_process_group(process)
         raise MutationBackendError("childProcessTimedOut") from error
+    except BaseException:
+        _terminate_process_group(process)
+        raise
     return _completed_process(command, process, stdout, stderr)
 
 
@@ -556,14 +587,16 @@ def _start_process(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             start_new_session=True,
-            preexec_fn=_disable_core_dumps,
+            preexec_fn=partial(_disable_core_dumps, os.getpid()),
         )
     except OSError as error:
         raise MutationBackendError("childProcessFailed") from error
 
 
-def _disable_core_dumps() -> None:
+def _disable_core_dumps(parent_pid=None) -> None:
     resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
+    if parent_pid is not None:
+        arm_parent_death(parent_pid)
 
 
 def _completed_process(

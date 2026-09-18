@@ -21,6 +21,7 @@ from .evidence import (
 from .evidence.store import _format_utc
 from .gate import DEFAULT_GATE, GateThresholds
 from .mutation import MutantRecord, evaluate_mutation_gate
+from .selection import selected_metrics
 from .rendering import render_canonical_decimal
 from .runner import run_fresh_coverage, run_mutmut
 
@@ -91,7 +92,7 @@ def _complete_crap(
     run_id: str,
     thresholds: GateThresholds = DEFAULT_GATE,
 ) -> tuple[int, dict]:
-    gate = evaluate_crap_gate(metrics, thresholds.crap_max)
+    gate = evaluate_crap_gate(selected_metrics(project, metrics), thresholds.crap_max)
     summary = _crap_summary(gate.metrics, gate.passed, gate.reason, thresholds.as_json()["crapMax"])
     status = "passed" if gate.passed else "qualityFailed"
     run = _run_record("crap", mode, run_id, correlation, status)
@@ -140,6 +141,8 @@ def run_strict_mutation(
         _redacted_mutation_summary(summary),
         findings,
     )
+    if getattr(execution, "details", {}):
+        result["mutationDetails"] = _mutation_details(execution, thresholds)
     return (0 if gate.passed else 2), result
 
 
@@ -155,7 +158,7 @@ def run_strict_check(
     coverage_execution = run_fresh_coverage(project)
     report = load_coverage_json(coverage_execution.report)
     metrics = _measure_sources(coverage_execution.sources, report, thresholds)
-    crap_gate = evaluate_crap_gate(metrics, thresholds.crap_max)
+    crap_gate = evaluate_crap_gate(selected_metrics(project, metrics), thresholds.crap_max)
     mutation_execution = run_mutmut(project)
     mutation_gate = evaluate_mutation_gate(
         mutation_execution.candidate_ids,
@@ -184,7 +187,26 @@ def run_strict_check(
         _redacted_mutation_summary(mutation),
         findings,
     )
+    if getattr(mutation_execution, "details", {}):
+        result["mutationDetails"] = _mutation_details(mutation_execution, thresholds)
     return (0 if passed else 2), result
+
+
+def _mutation_details(execution, thresholds):
+    locations = getattr(execution, "details", {})
+    mutants = [{"id": record.candidate_id, "status": record.status, **locations.get(record.candidate_id, {})}
+               for record in execution.records]
+    groups = {}
+    for record in execution.records:
+        location = locations.get(record.candidate_id, {})
+        key = (location.get("file"), location.get("function"))
+        if key[0] is not None:
+            groups.setdefault(key, []).append(record)
+    functions = []
+    for (file, name), records in sorted(groups.items()):
+        gate = evaluate_mutation_gate([record.candidate_id for record in records], records, mutation_min=thresholds.mutation_min)
+        functions.append({"file": file, "function": name, **_mutation_summary(gate, thresholds.as_json()["mutationMin"])})
+    return {"mutants": mutants, "functions": functions}
 
 
 def _required_version(distribution: str, expected: str) -> str:
@@ -289,6 +311,7 @@ def _callable_record(metric: CallableMetric) -> dict:
         "kind": definition.kind,
         "moduleRelativePath": definition.module_relative_path,
         "qualifiedName": definition.qualified_name,
+        "line": definition.declaration_line,
         "sourceRange": {
             "endByte": definition.source_range.end_byte,
             "startByte": definition.source_range.start_byte,

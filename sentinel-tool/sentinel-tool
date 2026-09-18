@@ -34,6 +34,8 @@ def main() -> int:
     request = json.load(sys.stdin)
     response = {key: request.get(key) for key in IDENTITY_KEYS}
     response["toolVersion"] = manifest["version"]
+    if "selection" in request:
+        response["selection"] = request["selection"]
 
     def finish(exit_code: int, *, no_changes: bool = False) -> int:
         status = "noChanges" if no_changes else STATUS_BY_EXIT.get(exit_code, "backendError")
@@ -67,6 +69,9 @@ def main() -> int:
             command += ["--mutation-min", str(gate["mutationMin"])]
         for changed in request.get("changedFiles") or []:
             command += ["--changed-file", str(changed)]
+        for field, option in (("files", "--file"), ("functions", "--function"), ("tests", "--tests")):
+            for value in request.get("selection", {}).get(field, []):
+                command += [option, value]
         with open(Path(directory) / "checker.log", "wb") as log:
             try:
                 completed = subprocess.run(
@@ -79,6 +84,13 @@ def main() -> int:
                 )
             except OSError:
                 return finish(5)
+        if completed.returncode not in (0, 2):
+            try:
+                diagnostic = json.loads(result_file.read_text(encoding="utf-8")).get("code")
+                if isinstance(diagnostic, str):
+                    response["diagnostic"] = diagnostic
+            except (OSError, ValueError, AttributeError):
+                pass  # The process status still reports the failed invocation.
         if completed.returncode in (0, 2):
             try:
                 result = json.loads(result_file.read_text(encoding="utf-8"))
@@ -91,6 +103,7 @@ def main() -> int:
                 return finish(6)
             if result.get("changedScope") == "empty":
                 return finish(0, no_changes=True) if completed.returncode == 0 and "changedFiles" in request else finish(6)
+            response["details"] = {key: result[key] for key in ("scope", "crap", "mutation", "mutationDetails") if key in result}
     return finish(completed.returncode)
 
 

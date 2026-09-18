@@ -48,6 +48,8 @@ class LoadedProject:
     config_path: Path
     module: ResolvedModule
     production_sources: tuple[ProductionSource, ...]
+    selected_functions: tuple[str, ...] = ()
+    selected_tests: tuple[str, ...] = ()
 
 
 def load_project(

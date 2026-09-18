@@ -225,6 +225,7 @@ class CliHelpTests(unittest.TestCase):
                 "_emit_result",
                 side_effect=(101, 102, 103, 104, 105),
             ) as emit,
+            patch.object(cli, "scope_result", return_value={}),
         ):
             results = tuple(
                 cli._dispatch_project_command(argument, project, DEFAULT_GATE)
@@ -520,6 +521,9 @@ class CliHelpTests(unittest.TestCase):
                 "crap_max": None,
                 "mutation_min": None,
                 "changed_file": [],
+                "file": [],
+                "function": [],
+                "tests": [],
             },
             vars(arguments),
         )

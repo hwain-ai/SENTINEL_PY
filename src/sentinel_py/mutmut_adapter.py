@@ -12,7 +12,8 @@ from types import MappingProxyType
 from typing import Optional
 
 import libcst as cst
-from mutmut.mutation.file_mutation import MutationVisitor, combine_mutations_to_source
+from mutmut.mutation.file_mutation import MutationVisitor, combine_mutations_to_source, group_by_top_level_node
+from mutmut.mutation.trampoline_templates import mangle_function_name
 from mutmut.mutation.mutators import mutation_operators
 from mutmut.mutation.pragma_handling import IgnoredCode
 from mutmut.utils.format_utils import get_mutant_name
@@ -117,6 +118,20 @@ def _is_exclusion_comment(comment: str) -> bool:
 
 
 def _generate_file_candidates(path: str, source: str) -> list[str]:
+    return list(_generate_file_plan(path, source))
+
+
+def candidate_details(sources: Mapping[str, bytes]) -> dict[str, dict]:
+    details = {}
+    for path in sorted(sources):
+        _validate_source_path(path)
+        source = _decode_source(sources[path])
+        _reject_exclusion_pragma(source)
+        details.update(_generate_file_plan(path, source))
+    return details
+
+
+def _generate_file_plan(path: str, source: str) -> dict[str, dict]:
     try:
         module = cst.parse_module(source)
         wrapper = cst.MetadataWrapper(module)
@@ -130,7 +145,44 @@ def _generate_file_candidates(path: str, source: str) -> list[str]:
         if isinstance(error, MutmutBridgeError):
             raise
         raise MutmutBridgeError("generatorError") from error
-    return [get_mutant_name(Path(path), name) for name in mutated.mutant_names]
+    details = _located_mutations(path, source, wrapper, visitor.mutations)
+    expected = [get_mutant_name(Path(path), name) for name in mutated.mutant_names]
+    if set(expected) != set(details):
+        raise MutmutBridgeError("candidateLocationMismatch")
+    return {identifier: details[identifier] for identifier in expected}
+
+
+def _function_owners(module):
+    owners = []
+    for node in module.body:
+        if isinstance(node, cst.FunctionDef):
+            owners.append((node, None))
+        elif isinstance(node, cst.ClassDef) and isinstance(node.body, cst.IndentedBlock):
+            owners.extend((method, node.name.value) for method in node.body.body if isinstance(method, cst.FunctionDef))
+    return owners
+
+
+def _located_mutations(path, source, wrapper, mutations):
+    positions = wrapper.resolve(cst.metadata.PositionProvider)
+    details = {}
+    groups = group_by_top_level_node(mutations)
+    for function, class_name in _function_owners(wrapper.module):
+        mangled = mangle_function_name(name=function.name.value, class_name=class_name)
+        for index, mutation in enumerate(groups.get(function, ())):
+            identifier = get_mutant_name(Path(path), f"{mangled}__mutmut_{index + 1}")
+            position = positions[mutation.original_node]
+            source_lines = source.splitlines(keepends=True)
+            start_byte = len("".join(source_lines[:position.start.line - 1]).encode()) + len(source_lines[position.start.line - 1][:position.start.column].encode())
+            details[identifier] = {
+                "file": path,
+                "function": f"{class_name}.{function.name.value}" if class_name else function.name.value,
+                "line": position.start.line,
+                "column": position.start.column + 1,
+                "sourceStartByte": start_byte,
+                "original": wrapper.module.code_for_node(mutation.original_node),
+                "replacement": wrapper.module.code_for_node(mutation.mutated_node),
+            }
+    return details
 
 
 def load_results(

@@ -15,6 +15,7 @@ from .crap import AnalysisError
 from .evidence import EvidenceError, read_history
 from .gate import GateInputError, load_gate
 from .mutation import MutationGateError
+from .selection import select_project, scope_result
 from .mutmut_adapter import MutmutBridgeError
 from .quality import (
     DependencyFailure,
@@ -65,6 +66,9 @@ def _add_quality_command(
     parser.add_argument("--crap-max")
     parser.add_argument("--mutation-min")
     parser.add_argument("--changed-file", action="append", default=[])
+    parser.add_argument("--file", action="append", default=[])
+    parser.add_argument("--function", action="append", default=[])
+    parser.add_argument("--tests", action="append", default=[])
 
 
 def _add_doctor_command(subparsers: argparse._SubParsersAction) -> None:
@@ -132,6 +136,7 @@ def _dispatch(arguments: argparse.Namespace) -> int:
         getattr(arguments, "mutation_min", None),
     )
     project = load_project(arguments.project, arguments.config, arguments.module)
+    project = select_project(project, getattr(arguments, "file", ()), getattr(arguments, "function", ()), getattr(arguments, "tests", ()))
     changed = getattr(arguments, "changed_file", [])
     if changed and arguments.command in _QUALITY_COMMANDS:
         restricted = restrict_production(project, changed)
@@ -167,6 +172,7 @@ def _dispatch_project_command(
         return _emit_result(arguments, 0, doctor_result(project))
     if arguments.command == "check":
         exit_code, result = run_strict_check(project, arguments.correlation_id, gate)
+        result["scope"] = scope_result(project)
         return _emit_result(arguments, exit_code, result)
     if arguments.command == "mutation":
         exit_code, result = run_strict_mutation(

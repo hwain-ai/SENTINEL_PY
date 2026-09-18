@@ -258,7 +258,7 @@ class BackendConfigTests(unittest.TestCase):
                     return_value=assertion_key,
                 ) as token_bytes,
                 patch(
-                    "sentinel_py.runner.mutation_backend._run_process_with_progress",
+                    "sentinel_py.runner.mutation_backend._run_process",
                     return_value=SimpleNamespace(returncode=0),
                 ) as run,
                 patch.object(
@@ -274,10 +274,9 @@ class BackendConfigTests(unittest.TestCase):
             self.assertEqual(assertion_key, reports.assertion_key)
             self.assertNotIn(assertion_key.hex(), repr(reports))
             token_bytes.assert_called_once_with(32)
-            command, cwd, environment, progress_root = run.call_args.args
-            self.assertEqual((sys.executable, "-m", "mutmut", "run", "--max-children", "1"), command)
+            command, cwd, environment = run.call_args.args
+            self.assertEqual((sys.executable, str(Path(mutation_backend.__file__).with_name("mutmut_unlimited.py")), "run", "--max-children", "1"), command)
             self.assertEqual(snapshot, cwd)
-            self.assertEqual(reports.root, progress_root)
             self.assertEqual("sealed", environment["BASE"])
             self.assertEqual("nonce", environment["SENTINEL_MUTMUT_RUN_NONCE"])
             self.assertEqual(
@@ -289,12 +288,7 @@ class BackendConfigTests(unittest.TestCase):
                 environment["SENTINEL_PYTEST_HMAC_KEY"],
             )
             self.assertEqual(
-                {
-                    "startup_timeout_seconds": 15 * 60,
-                    "idle_timeout_seconds": 10 * 60,
-                    "absolute_timeout_seconds": 24 * 60 * 60,
-                    "poll_seconds": 1,
-                },
+                {},
                 run.call_args.kwargs,
             )
             self.assertEqual(0o700, reports.root.stat().st_mode & 0o777)
@@ -305,7 +299,7 @@ class BackendConfigTests(unittest.TestCase):
             snapshot = temporary_root / "project"
             snapshot.mkdir()
             with patch(
-                "sentinel_py.runner.mutation_backend._run_process_with_progress",
+                "sentinel_py.runner.mutation_backend._run_process",
                 return_value=SimpleNamespace(returncode=1),
             ):
                 with self.assertRaises(MutationBackendError) as stopped:
@@ -322,7 +316,7 @@ class BackendConfigTests(unittest.TestCase):
             patch.object(mutation_backend, "_mutation_test_environment", return_value={}),
             patch.object(
                 mutation_backend,
-                "_run_process_with_progress",
+                "_run_process",
                 return_value=SimpleNamespace(returncode=0),
             ),
         ):
@@ -1162,6 +1156,7 @@ class BackendConfigTests(unittest.TestCase):
                     "sentinel_py.runner.mutation_backend.enumerate_candidates",
                     return_value=candidates,
                 ) as enumerate_mutants,
+                patch("sentinel_py.runner.mutation_backend._candidate_selection", return_value=(candidates, {key: {} for key in candidates})),
                 patch(
                     "sentinel_py.runner.mutation_backend._require_two_baselines",
                     side_effect=record_baselines,
@@ -1192,7 +1187,7 @@ class BackendConfigTests(unittest.TestCase):
             ):
                 execution = _run_in_temporary_snapshot(project)
 
-        self.assertEqual(MutationExecution(candidates, records), execution)
+        self.assertEqual(MutationExecution(candidates, records, {key: {} for key in candidates}), execution)
         self.assertEqual(["copy", "observer", "baselines", "config", "backend"], events)
         temporary_directory.assert_called_once_with(prefix="sentinel-py-mutmut-")
         source_bytes.assert_called_once_with(project)
@@ -1551,7 +1546,7 @@ class BackendConfigTests(unittest.TestCase):
             )
 
         start_process.assert_called_once_with(command, cwd, environment)
-        process.communicate.assert_called_once_with(timeout=300)
+        process.communicate.assert_called_once_with(timeout=None)
         complete_process.assert_called_once_with(
             command,
             process,
@@ -2168,6 +2163,9 @@ class BackendConfigTests(unittest.TestCase):
                         mutation_backend._start_process(command, cwd, supplied),
                     )
 
+                child_setup = popen.call_args.kwargs["preexec_fn"]
+                self.assertIs(child_setup.func, mutation_backend._disable_core_dumps)
+                self.assertEqual(child_setup.args, (os.getpid(),))
                 popen.assert_called_once_with(
                     command,
                     cwd=cwd,
@@ -2179,7 +2177,7 @@ class BackendConfigTests(unittest.TestCase):
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     start_new_session=True,
-                    preexec_fn=mutation_backend._disable_core_dumps,
+                    preexec_fn=child_setup,
                 )
                 self.assertEqual(original, supplied)
 

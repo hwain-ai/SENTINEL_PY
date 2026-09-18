@@ -1,0 +1,31 @@
+name: docs
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    if: github.event.deleted != true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check documentation in the submitted commit
+        env:
+          DOCS_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          DOCS_HEAD: ${{ github.sha }}
+          DOCS_EVENT: ${{ github.event_name }}
+          DOCS_REF: ${{ github.ref }}
+          DOCS_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          DOCS_DELETED: ${{ github.event.deleted || false }}
+        run: python3 scripts/docs_lint.py --ci

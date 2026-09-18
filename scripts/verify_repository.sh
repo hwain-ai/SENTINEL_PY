@@ -39,7 +39,7 @@ remote_names="$(/usr/bin/git remote)"
 [[ -z "${remote_names}" ]] ||
   fail "expected no Git remotes, got: ${remote_names}"
 
-for required_file in docs/index.md docs/log.md toolchain.lock.json; do
+for required_file in README.md docs/index.md toolchain.lock.json; do
   [[ -f "${repository_root}/${required_file}" ]] ||
     fail "missing regular file: ${required_file}"
 done

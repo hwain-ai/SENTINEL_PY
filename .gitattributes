@@ -1,0 +1,3 @@
+.githooks/* text eol=lf
+scripts/docs_lint.py text eol=lf
+.github/workflows/docs.yml text eol=lf

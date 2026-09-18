@@ -1,49 +1,45 @@
 # SENTINEL_PY
 
-Python 프로젝트의 복잡도·테스트 실행 범위·변이 검사 결과를 함께 확인하는 언어별 검사기입니다. 변이 검사는 코드를 일부러 바꾼 뒤 테스트가 그 변경을 발견하는지 확인하는 방식입니다.
+Python 함수의 복잡도와 테스트 실행 범위로 CRAP을 계산하고, mutmut으로 테스트의 오류 탐지율을 측정합니다. `sentinel-tool/`의 어댑터가 통합 SENTINEL 요청을 받아 결과 JSON을 반환합니다.
 
-- 구현된 범위: 명령 실행, coverage·mutmut 도구 연결, 품질 판정과 실행 증거 기록.
-- 현재 작업: 실제 공개 프로젝트의 검사 결과를 회수했고, 별도 사본에서 원본 mutmut의 직접 비교 실행을 진행 중입니다. 새 비교 결과는 아직 없습니다.
-- 통합 연결: `sentinel-tool/` 폴더의 어댑터가 통합 SENTINEL의 도구 요청(표준입력 JSON)을 받아 이 검사기의 `check`를 실행하고 응답 JSON 하나만 표준출력에 씁니다. `sentinel setup --language python`이 `sentinel-tool/setup.sh`로 Python·uv·의존성을 준비한 뒤 이 어댑터를 묶음으로 설치합니다.
-- 지원 플랫폼: Linux(x86_64, arm64)와 macOS(Intel, Apple Silicon). Windows 는 WSL2 안에서 씁니다. 고정 mutmut 이 네이티브 Windows 실행을 거부하기 때문입니다. `scripts/toolchain.py` 가 플랫폼을 감지해 잠금 파일의 해당 항목(주소·크기·SHA-256·설치 트리 지문)으로 Python·uv 를 받습니다.
-- 미완료 범위: 실제 도구 비교, 설치 플러그인의 호스트 검증. [최신 검증 기록](docs/sentinel-python-native-validation.md)을 기준으로 확인합니다.
+## 검사 실행
 
-## 역할
+[SENTINEL 설치 안내](https://github.com/hwain-ai/SENTINEL)를 따라 통합 명령을 준비한 뒤 검사할 프로젝트에서 실행합니다.
 
-이 저장소는 Python 검사 도구를 실행하고 결과를 해석합니다. 컨테이너 생성·실행 제한·정리는 공통 SENTINEL이 맡습니다.
+```sh
+# Python 검사 도구와 프로젝트 설정 준비
+sentinel setup --language python
+# 기능 파일의 특정 함수를 지정한 테스트로 검사
+sentinel check --file src/pricing.py --function calculate_discount --tests tests/test_pricing.py
+# 프로젝트 설정의 기능 코드와 테스트 전체 검사
+sentinel check --all
+```
 
-전체 검사는 소스 구조 확인, 테스트 실행 범위 수집, 점수 계산, 변이 검사 순서로 진행합니다. CRAP은 코드 복잡도와 테스트 실행 범위를 합친 점수이며, 반올림 없이 8 이하인지 판정합니다. 함수 안의 함수나 익명 함수도 각각 측정하고 바깥 함수와 중복 계산하지 않습니다.
+`--file`은 점수를 측정할 기능 파일, `--function`은 그 안의 함수 이름이며 괄호를 붙이지 않습니다. 함수를 생략하면 파일 전체를 측정합니다. `--tests`는 실행할 테스트 파일이고 여러 파일은 이 옵션을 반복합니다. 테스트를 생략하면 프로젝트에 설정된 테스트를 사용합니다. `--changed`는 Git 변경 파일 중 기능 코드만 선택하며, 테스트만 바뀌었으면 `noChanges`로 검사를 건너뜁니다. 이때는 기능 파일을 직접 지정해 재검사합니다.
 
-프로젝트의 모든 Python 파일은 생산 코드(`production` 글롭), 테스트(`testRoots`+`testPatterns`), 또는 제외 파일(`excluded` 글롭, 예: `docs/**/*.py`) 중 하나로 분류돼야 하며, 분류되지 않은 파일이 있으면 `unclassifiedSource`로 중단합니다. 제외 파일은 분석·변이 대상이 아닙니다.
+기본 검사에는 자동 실행 시간 제한이 없습니다. 중단하려면 Ctrl+C를 누릅니다. 특정 파일·함수·테스트 검사 결과는 전체 인증으로 취급하지 않습니다. 점수, `inScope`, `pass`, `certified`와 오류 상태는 [결과 해석](https://github.com/hwain-ai/SENTINEL/blob/main/docs/results.md)을 참고합니다.
 
-프로젝트 테스트가 외부 패키지를 쓰면 `./scripts/uv.sh deps <프로젝트>/.sentinel-deps <요구사항 파일>`로 검사기의 고정 Python에 맞는 wheel을 그 폴더에 설치합니다(통합 SENTINEL은 `setup --python-requirements`로 같은 일을 합니다). 검사 때 `.sentinel-deps`는 사본으로 복사되고 PYTHONPATH 마지막에 놓이며, 분석·변이·원본 보호·coverage 측정 대상에서는 빠집니다.
+## 프로젝트 설정과 제한
 
-테스트 실행 범위는 고정된 coverage.py 7.16.0 보고서로 확인합니다. 형식·버전이 다르거나 검사 대상 코드를 제외한 보고서는 거부합니다. 함수별 실행 여부를 구분할 수 없으면 0%로 추측하지 않고 확인 불가로 남깁니다.
+모든 Python 파일을 기능 코드(`production`), 테스트(`testRoots`와 `testPatterns`), 제외 파일(`excluded`)로 구분해야 합니다. 분류되지 않은 파일은 `unclassifiedSource` 오류입니다. 제외 파일은 CRAP·변이 측정 대상에 포함하지 않습니다.
 
-변이 검사는 다음 조건을 모두 만족해야 통과합니다.
+테스트에 외부 패키지가 필요하면 `sentinel setup --language python --python-requirements requirements/tests.txt`로 준비합니다. 검사기는 프로젝트의 `.sentinel-deps`에 설치한 의존성을 사본에 복사해 사용합니다. 이 폴더는 기능 코드·변이·coverage 측정에서 제외합니다.
 
-- 검사할 변이가 하나 이상이고, 계획한 대상과 실제 결과가 정확히 일치합니다.
-- 탐지된 변이의 비율이 최소 kill 비율 이상입니다. 기본값 90%에서는 검사 대상 변이의 90% 이상이 테스트의 기대값 검사 실패로 탐지되고 같은 실패를 재현할 수 있어야 합니다. 미탐지·시간 초과·실행 오류·도구 오류는 어느 비율에서도 탐지로 세지 않습니다.
-- 승인받지 않은 검사 제외가 없습니다.
+CRAP 기본 상한은 8, mutation 최소 탐지율은 90%입니다. 함수와 중첩 함수는 각각 계산합니다. 실행 범위를 함수와 연결할 수 없으면 미측정으로 표시합니다. Mutation의 `killed`는 테스트의 기대값 검사 실패가 같은 결과로 재현된 변이만 셉니다. 실행 오류나 시간 초과는 탐지 성공으로 세지 않습니다.
 
-변경분만 검사하려면 `--changed-file 경로`(프로젝트 기준 상대 경로, 반복 가능)를 넘깁니다. 생산 코드에 해당하는 경로만 CRAP 측정과 변이 대상으로 남기고, 테스트는 전체를 그대로 실행합니다. 넘긴 경로 중 생산 코드가 하나도 없으면 판정할 대상이 없으므로 아무 검사도 돌리지 않고 통과(종료 0, `changedScope: empty`)로 응답하며 증거도 남기지 않습니다. 통합 SENTINEL의 `check --changed`가 git 변경분을 이 인자로 넘깁니다.
+Linux와 macOS의 x86_64·arm64를 지원하며 Windows는 WSL2에서 사용합니다. mutmut은 네이티브 Windows에서 실행하지 않습니다.
 
-기준값은 `crap`, `mutation`, `check` 명령의 `--crap-max`(CRAP 상한, 기본 8)와 `--mutation-min`(최소 kill 비율 %, 기본 90)으로 넘깁니다. 정수 또는 소수점 두 자리까지의 문자열이며 정확한 분수로 비교합니다. 결과와 증거 파일의 crap·mutation 구성요소는 판정에 쓴 crapMax·mutationMin을 함께 기록합니다.
+## 검사기 개발과 검증
 
-ItsDangerous 2.2.0의 실제 재검증에서 빌드와 기본 테스트 297개 두 번, 원본 보존과 컨테이너 정리를 확인했습니다. 이전 결과 저장 오류는 해소됐고 변이 567개의 상세 결과를 회수했습니다. 검사 결과는 품질 기준 미달인 종료 2/qualityFailed입니다. 결과 회수 완료를 프로젝트의 품질 통과로 해석하지 않습니다.
+`toolchain.lock.json`과 의존성 잠금이 사용할 도구를 정합니다. 실행기는 다운로드와 설치 파일의 지문을 확인하며, 기존 설치가 다르면 중단합니다. 고정 Python을 직접 실행하면 바이트코드 캐시가 설치 지문을 바꿀 수 있으므로 저장소 실행기를 사용합니다.
 
-## 검증
-
-처음 한 번 `sentinel-tool/setup.sh`(또는 `python3 -I -B scripts/toolchain.py setup`)로 고정된 Python 3.12.13·uv 0.12.9 와 의존성을 준비합니다. 잠금 파일의 공식 주소에서 받아 크기·SHA-256·설치 트리 지문을 대조하고, 이미 준비돼 있으면 확인만 합니다. 이후 실행기(`scripts/uv.sh`, 실체는 `scripts/toolchain.py`)는 도구 파일을 검증한 뒤 기존 설치만 사용하며, 잠금과 다르면 중단합니다. 자식 프로세스는 상속 없는 최소 환경(HOME·캐시는 `.toolchain` 아래, PATH 는 고정 도구만)에서 돕니다. 잠긴 Python 을 실행기 밖에서 직접 돌리면 표준 라이브러리에 바이트코드 캐시가 생겨 트리 지문이 어긋나므로, 반드시 실행기를 통해 씁니다.
-
-```bash
-# ./scripts/uv.sh run = 검증된 기존 환경에서 실행; python -B = 임시 바이트코드 파일 생성 금지
-# -m unittest discover = 테스트 탐색·실행; -s tests = tests 폴더; -v = 개별 결과 표시
+```sh
+# 검사기 자체의 고정 Python·uv·의존성 준비
+sentinel-tool/setup.sh
+# 검사기 자체 시험 실행
 ./scripts/uv.sh run python -B -m unittest discover -s tests -v
 ```
 
-이 명령은 검사기 자체의 시험입니다. 공개 프로젝트 비교나 네트워크 차단 검증을 대신하지 않습니다.
+문서와 개발 안내는 [문서 목록](docs/index.md)에 있습니다.
 
-## 설계 근거
-
-원본 작업공간 설계 문서: [2026-08-native-quality-tools.md](https://github.com/hwain-ai/SENTINEL/blob/main/docs/design-docs/2026-08-native-quality-tools.md) (SENTINEL 저장소)
+통합 실행기에 연결하는 어댑터 버전은 `0.1.3`이다. [sentinel-tool/version](sentinel-tool/version)과 설치한 실행기의 승인 목록을 함께 확인한다. 기존 설치의 갱신은 [통합 실행기 갱신 안내](https://github.com/hwain-ai/SENTINEL#승인된-도구-버전-갱신)를 따른다.

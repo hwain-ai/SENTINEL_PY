@@ -445,6 +445,7 @@ class MutationQualityTests(unittest.TestCase):
             kind="function",
             module_relative_path="src/sample.py",
             qualified_name="sample",
+            declaration_line=1,
             source_range=SimpleNamespace(start_byte=11, end_byte=29),
         )
         crap = SimpleNamespace(
@@ -472,6 +473,7 @@ class MutationQualityTests(unittest.TestCase):
                 "kind": "function",
                 "moduleRelativePath": "src/sample.py",
                 "qualifiedName": "sample",
+                "line": 1,
                 "sourceRange": {"endByte": 29, "startByte": 11},
                 "status": "crapThresholdExceeded",
                 "totalUnits": 4,

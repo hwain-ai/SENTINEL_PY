@@ -144,6 +144,8 @@ def _coverage_formatter(project: LoadedProject) -> tuple[str, ...]:
 
 
 def _module_test_roots(project: LoadedProject) -> tuple[str, ...]:
+    if getattr(project, "selected_tests", ()):
+        return tuple((project.project_root / path).relative_to(project.module.root).as_posix() for path in project.selected_tests)
     return tuple(
         path.relative_to(project.module.root).as_posix()
         for path in project.module.test_roots

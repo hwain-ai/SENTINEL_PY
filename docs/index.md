@@ -1,20 +1,13 @@
----
-okf_version: "0.2"
----
+# 문서 안내
 
-# SENTINEL_PY 문서
+각 문서의 내용과 함께 확인할 코드·설정 경로입니다.
 
-SENTINEL_PY의 구현 상태와 변경 이유를 찾는 문서 시작점입니다.
+`docs/manifest.json`을 수정한 뒤 `python scripts/docs_lint.py --write-index`로 이 목록을 갱신합니다.
+코드 변경에 필요한 문서는 `python scripts/docs_lint.py --base HEAD`로 확인합니다.
+Python 명령은 환경에 맞게 Windows에서 `py -3`, Linux에서 `python3`로 바꿀 수 있습니다.
+검사는 관련 문서의 실제 변경 여부를 확인하며, 설명이 정확한지는 사람이 검토해야 합니다.
 
-## 구현 상태
-
-소스 구조 분석, 복잡도·테스트 실행 범위 계산, 명령 실행, coverage·mutmut 연결과 품질 결과·실행 증거 기록을 구현했습니다. 코드를 일부러 바꾸어 테스트의 탐지 여부를 보는 변이 검사는, 실제 단언 실패와 같은 실패의 재현이 확인된 경우만 검출로 인정합니다.
-
-CRAP 상한과 변이 최소 kill 비율을 명령 인자로 받고, 통합 SENTINEL이 부르는 어댑터(`sentinel-tool/`)를 갖췄습니다. 실제 공개 프로젝트에서 결과 저장 오류가 해소됐고 품질 기준 미달 결과와 변이 567개의 상세 기록을 회수했습니다. 원래 빌드·기본 테스트·원본 보존·정리도 확인했습니다. 현재 원본 mutmut의 직접 비교 실행은 진행 중이며, 결과 대조·통합 연결·설치 플러그인 검증은 남았습니다.
-
-[최신 실제 검증 기록](sentinel-python-native-validation.md)에서 근거를, [사용·시험 안내](../README.md)에서 역할과 실행 방법을 확인합니다.
-
-## 운영 기록
-
-* [실제 프로젝트 검증 기록](sentinel-python-native-validation.md) - 고정 패키지·오프라인 설치 검증, 공개 프로젝트 ItsDangerous 검사와 직접 mutmut 대조
-* [변경 기록](log.md) - 문서 번들의 생성과 변경 내역
+| 문서 | 내용 | 관련 코드·설정 |
+| --- | --- | --- |
+| [README.md](../README.md) | Python 검사기의 설치, 소스·테스트 설정, CRAP·mutation 실행과 결과 | `backend.lock.json`, `pyproject.toml`, `scripts/toolchain.py`, `sentinel-tool/**`, `src/**`, `toolchain.lock.json`, `uv.lock` |
+| [docs/contributing.md](contributing.md) | 문서 색인·소스 연결표 관리, diff 검사와 push 훅 사용 | `.githooks/**`, `.github/workflows/**`, `docs/manifest.json`, `scripts/docs_lint.py`, `scripts/verify_repository.sh`, `tests/test_docs_lint.py` |
