@@ -5,6 +5,7 @@ import sys
 import time
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 class ChildLifetimeTests(unittest.TestCase):
@@ -38,10 +39,15 @@ time.sleep(600)
             if child_pid is not None and self.running(child_pid):
                 os.kill(child_pid, signal.SIGKILL)
 
+    def test_process_disappearing_during_stat_read_is_stopped(self):
+        for error in (FileNotFoundError(), ProcessLookupError()):
+            with self.subTest(error=type(error).__name__), patch.object(Path, "read_text", side_effect=error):
+                self.assertFalse(self.running(123))
+
     @staticmethod
     def running(pid):
         try:
             state = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[0]
             return state != "Z"
-        except FileNotFoundError:
+        except (FileNotFoundError, ProcessLookupError):
             return False
