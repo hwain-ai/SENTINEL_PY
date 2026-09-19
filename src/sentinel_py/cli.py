@@ -19,7 +19,7 @@ from .selection import select_project, scope_result
 from .mutmut_adapter import MutmutBridgeError
 from .quality import (
     DependencyFailure,
-    doctor_result,
+    version_result,
     run_local_crap,
     run_strict_check,
     run_strict_crap,
@@ -46,7 +46,7 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
     for command in _QUALITY_COMMANDS:
         _add_quality_command(subparsers, command)
-    _add_doctor_command(subparsers)
+    _add_version_command(subparsers)
     _add_history_command(subparsers)
     return parser
 
@@ -71,8 +71,8 @@ def _add_quality_command(
     parser.add_argument("--tests", action="append", default=[])
 
 
-def _add_doctor_command(subparsers: argparse._SubParsersAction) -> None:
-    parser = subparsers.add_parser("doctor")
+def _add_version_command(subparsers: argparse._SubParsersAction) -> None:
+    parser = subparsers.add_parser("version")
     _add_project_selection(parser)
     _add_output_selection(parser)
 
@@ -168,8 +168,8 @@ def _dispatch_project_command(
     project: LoadedProject,
     gate,
 ) -> int:
-    if arguments.command == "doctor":
-        return _emit_result(arguments, 0, doctor_result(project))
+    if arguments.command == "version":
+        return _emit_result(arguments, 0, version_result(project))
     if arguments.command == "check":
         exit_code, result = run_strict_check(project, arguments.correlation_id, gate)
         result["scope"] = scope_result(project)

@@ -3,5 +3,5 @@
 # every child a clean environment.
 PATH="/usr/bin:/bin:${PATH:-}"
 export PATH
-# First-run preparation: locked Python and uv, dependencies from uv.lock, doctor. See scripts/toolchain.py.
+# First-run preparation: locked Python and uv, dependencies from uv.lock, version. See scripts/toolchain.py.
 exec "${SENTINEL_PYTHON:-python3}" -I -B "$(dirname "$0")/../scripts/toolchain.py" setup

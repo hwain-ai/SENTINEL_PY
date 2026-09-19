@@ -7,7 +7,7 @@ served through WSL, because the pinned mutation backend (mutmut) refuses to run
 natively there.
 
     scripts/toolchain.py bootstrap            download, verify and install the locked Python and uv
-    scripts/toolchain.py setup                bootstrap, sync the locked dependencies, run doctor
+    scripts/toolchain.py setup                bootstrap, sync the locked dependencies, run version
     scripts/toolchain.py run ARGS...          uv run inside the locked environment
     scripts/toolchain.py sync [--offline]     uv sync from uv.lock
     scripts/toolchain.py lock | lock-check    maintain / check uv.lock
@@ -400,8 +400,8 @@ def command_setup() -> int:
         print("sentinel-tool: locked dependencies are not cached, syncing from the lock file online", file=sys.stderr)
         if _run_child(_uv_invocation("sync", [])) != 0:
             raise fail("dependency sync failed")
-    if _run_child(_uv_invocation("run", ["sentinel-py", "doctor", "--project", str(REPOSITORY_ROOT), "--format", "json"]), quiet=True) != 0:
-        raise fail("doctor failed")
+    if _run_child(_uv_invocation("run", ["sentinel-py", "version", "--project", str(REPOSITORY_ROOT), "--format", "json"]), quiet=True) != 0:
+        raise fail("version failed")
     print("sentinel-tool: python checker ready", file=sys.stderr)
     return 0
 

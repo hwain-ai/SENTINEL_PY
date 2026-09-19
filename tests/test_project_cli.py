@@ -57,21 +57,21 @@ def _file_coverage(*, executed=(), missing=()) -> dict:
 
 
 class ProjectCliTests(unittest.TestCase):
-    def test_doctor_validates_the_project_without_creating_history(self):
+    def test_version_validates_the_project_without_creating_history(self):
         from sentinel_py.cli import main
 
-        with tempfile.TemporaryDirectory(prefix="sentinel-py-doctor-") as directory:
+        with tempfile.TemporaryDirectory(prefix="sentinel-py-version-") as directory:
             project = Path(directory)
             self._write_project(project, b"def answer():\n    return 42\n")
 
             exit_code, stdout, stderr = self._run(
                 main,
-                ["doctor", "--project", str(project), "--format", "json"],
+                ["version", "--project", str(project), "--format", "json"],
             )
 
             self.assertEqual(0, exit_code, stderr)
             result = json.loads(stdout)
-            self.assertEqual("sentinel-doctor-v1", result["schemaVersion"])
+            self.assertEqual("sentinel-version-v1", result["schemaVersion"])
             self.assertEqual("python", result["language"])
             self.assertEqual("api", result["module"])
             self.assertEqual(1, result["productionFiles"])
@@ -231,7 +231,7 @@ class ProjectCliTests(unittest.TestCase):
 
             exit_code, stdout, stderr = self._run(
                 main,
-                ["doctor", "--project", str(project), "--format", "json"],
+                ["version", "--project", str(project), "--format", "json"],
             )
 
             self.assertEqual(3, exit_code, stderr)
@@ -308,7 +308,7 @@ class ProjectCliTests(unittest.TestCase):
 
             exit_code, stdout, stderr = self._run(
                 main,
-                ["doctor", "--project", str(project), "--format", "json"],
+                ["version", "--project", str(project), "--format", "json"],
             )
 
             self.assertEqual(3, exit_code, stderr)
@@ -326,7 +326,7 @@ class ProjectCliTests(unittest.TestCase):
 
             exit_code, stdout, stderr = self._run(
                 main,
-                ["doctor", "--project", str(project), "--format", "json"],
+                ["version", "--project", str(project), "--format", "json"],
             )
 
             self.assertEqual(3, exit_code, stderr)

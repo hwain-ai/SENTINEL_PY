@@ -82,8 +82,8 @@ class CliHelpTests(unittest.TestCase):
             MutationBackendError,
         )
 
-        arguments = SimpleNamespace(command="doctor")
-        argv = ("doctor", "--format", "json")
+        arguments = SimpleNamespace(command="version")
+        argv = ("version", "--format", "json")
         parser = SimpleNamespace(parse_args=lambda value: arguments)
         with (
             patch.object(cli, "build_parser", return_value=parser) as build_parser,
@@ -186,20 +186,20 @@ class CliHelpTests(unittest.TestCase):
         from sentinel_py import cli
 
         project = object()
-        doctor_document = {"runner": "doctor"}
+        version_document = {"runner": "version"}
         check_document = {"runner": "check"}
         mutation_document = {"runner": "mutation"}
         local_document = {"runner": "local-crap"}
         strict_document = {"runner": "strict-crap"}
         arguments = (
-            SimpleNamespace(command="doctor"),
+            SimpleNamespace(command="version"),
             SimpleNamespace(command="check", correlation_id="check-id"),
             SimpleNamespace(command="mutation", correlation_id="mutation-id"),
             SimpleNamespace(command="crap", mode="local", correlation_id="local-id"),
             SimpleNamespace(command="crap", mode="strict", correlation_id="strict-id"),
         )
         with (
-            patch.object(cli, "doctor_result", return_value=doctor_document) as doctor,
+            patch.object(cli, "version_result", return_value=version_document) as version,
             patch.object(
                 cli,
                 "run_strict_check",
@@ -233,14 +233,14 @@ class CliHelpTests(unittest.TestCase):
             )
 
         self.assertEqual((101, 102, 103, 104, 105), results)
-        doctor.assert_called_once_with(project)
+        version.assert_called_once_with(project)
         check.assert_called_once_with(project, "check-id", DEFAULT_GATE)
         mutation.assert_called_once_with(project, "mutation-id", DEFAULT_GATE)
         local_crap.assert_called_once_with(project, "local-id", DEFAULT_GATE)
         strict_crap.assert_called_once_with(project, "strict-id", DEFAULT_GATE)
         self.assertEqual(
             [
-                call(arguments[0], 0, doctor_document),
+                call(arguments[0], 0, version_document),
                 call(arguments[1], 12, check_document),
                 call(arguments[2], 13, mutation_document),
                 call(arguments[3], 14, local_document),
@@ -253,7 +253,7 @@ class CliHelpTests(unittest.TestCase):
         from sentinel_py import cli
 
         arguments = SimpleNamespace(
-            command="doctor",
+            command="version",
             project="project",
             config="chosen.json",
             module="api",
@@ -461,7 +461,7 @@ class CliHelpTests(unittest.TestCase):
                 os.chdir(previous)
 
             self.assertEqual(0, stopped.exception.code)
-            for command in ("crap", "mutation", "check", "doctor", "history"):
+            for command in ("crap", "mutation", "check", "version", "history"):
                 with self.subTest(command=command):
                     self.assertIn(command, stdout.getvalue())
             self.assertEqual([], list(project.iterdir()))
@@ -582,10 +582,10 @@ class CliHelpTests(unittest.TestCase):
                 build_parser().parse_args(["history", "show"])
         self.assertEqual(2, stopped.exception.code)
 
-    def test_output_formats_are_exact_for_quality_doctor_and_history(self):
+    def test_output_formats_are_exact_for_quality_version_and_history(self):
         from sentinel_py.cli import build_parser
 
-        commands = (["check"], ["doctor"], ["history"])
+        commands = (["check"], ["version"], ["history"])
         for prefix in commands:
             with self.subTest(command=prefix[0], mode="default"):
                 self.assertEqual(

@@ -395,8 +395,8 @@ class MutationQualityTests(unittest.TestCase):
                 _measure_project(missing_project, parsed_report)
             self.assertEqual("productionSourceUnavailable", stopped.exception.code)
 
-    def test_doctor_result_preserves_the_exact_public_contract(self):
-        from sentinel_py.quality import doctor_result
+    def test_version_result_preserves_the_exact_public_contract(self):
+        from sentinel_py.quality import version_result
 
         project = SimpleNamespace(
             module=SimpleNamespace(module_id="api"),
@@ -415,7 +415,7 @@ class MutationQualityTests(unittest.TestCase):
                 return_value="7.16.0",
             ) as required_version,
         ):
-            result = doctor_result(project)
+            result = version_result(project)
 
         self.assertEqual(
             {
@@ -430,7 +430,7 @@ class MutationQualityTests(unittest.TestCase):
                 "module": "api",
                 "passed": True,
                 "productionFiles": 2,
-                "schemaVersion": "sentinel-doctor-v1",
+                "schemaVersion": "sentinel-version-v1",
             },
             result,
         )

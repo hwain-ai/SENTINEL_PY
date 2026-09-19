@@ -1,4 +1,4 @@
-"""Project-level doctor and native Python CRAP orchestration."""
+"""Project-level version and native Python CRAP orchestration."""
 
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ class DependencyFailure(RuntimeError):
         super().__init__(code)
 
 
-def doctor_result(project: LoadedProject) -> dict:
+def version_result(project: LoadedProject) -> dict:
     """Return read-only validation of the pinned Python execution environment."""
 
     backend = verify_backend_lock()
@@ -51,7 +51,7 @@ def doctor_result(project: LoadedProject) -> dict:
         "module": project.module.module_id,
         "passed": True,
         "productionFiles": len(project.production_sources),
-        "schemaVersion": "sentinel-doctor-v1",
+        "schemaVersion": "sentinel-version-v1",
     }
 
 

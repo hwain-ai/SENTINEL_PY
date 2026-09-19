@@ -44,7 +44,7 @@ class BackendLockError(RuntimeError):
 
 @dataclass(frozen=True)
 class BackendIdentity:
-    """Verified identity safe to expose through doctor output."""
+    """Verified identity safe to expose through version output."""
 
     name: str
     version: str
