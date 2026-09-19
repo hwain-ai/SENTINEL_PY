@@ -17,7 +17,7 @@ sentinel check --all
 
 `--file`은 점수를 측정할 기능 파일, `--function`은 그 안의 함수 이름이며 괄호를 붙이지 않습니다. 함수를 생략하면 파일 전체를 측정합니다. `--tests`는 실행할 테스트 파일이고 여러 파일은 이 옵션을 반복합니다. 테스트를 생략하면 프로젝트에 설정된 테스트를 사용합니다. `--changed`는 Git 변경 파일 중 기능 코드만 선택하며, 테스트만 바뀌었으면 `noChanges`로 검사를 건너뜁니다. 이때는 기능 파일을 직접 지정해 재검사합니다.
 
-기본 검사에는 자동 실행 시간 제한이 없습니다. 중단하려면 Ctrl+C를 누릅니다. 특정 파일·함수·테스트 검사 결과는 전체 인증으로 취급하지 않습니다. 점수, `inScope`, `pass`, `certified`와 오류 상태는 [결과 해석](https://github.com/hwain-ai/SENTINEL/blob/main/docs/results.md)을 참고합니다.
+기본 검사에는 자동 실행 시간 제한이 없습니다. Ctrl+C로 중단합니다. 통합 명령에서 `exitCode`는 명령 종료 코드, `selection`은 검사 범위, `results[].status`는 품질 판정입니다. 내부 CRAP·mutation의 `pass`는 각 기준 충족 여부입니다. [JSON 조각별 결과 해석](https://github.com/hwain-ai/SENTINEL/blob/main/docs/results.md)을 참고하세요.
 
 ## 프로젝트 설정과 제한
 
