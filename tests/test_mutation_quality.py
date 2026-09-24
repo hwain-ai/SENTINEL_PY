@@ -849,8 +849,9 @@ class MutationQualityTests(unittest.TestCase):
                     return_value=redacted_mutation,
                 ) as redact_mutation,
                 patch("sentinel_py.quality.commit_check_evidence") as commit,
+                patch("sentinel_py.quality._protected_inventory", return_value=()),
             ):
-                exit_code, result = run_strict_check(project, correlation_id)
+                exit_code, result = run_strict_check(project, correlation_id, execution_mode="sequential")
 
             self.assertEqual(expected_exit, exit_code)
             self.assertEqual(

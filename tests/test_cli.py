@@ -193,7 +193,7 @@ class CliHelpTests(unittest.TestCase):
         strict_document = {"runner": "strict-crap"}
         arguments = (
             SimpleNamespace(command="version"),
-            SimpleNamespace(command="check", correlation_id="check-id"),
+            SimpleNamespace(command="check", correlation_id="check-id", execution_mode="parallel"),
             SimpleNamespace(command="mutation", correlation_id="mutation-id"),
             SimpleNamespace(command="crap", mode="local", correlation_id="local-id"),
             SimpleNamespace(command="crap", mode="strict", correlation_id="strict-id"),
@@ -234,7 +234,7 @@ class CliHelpTests(unittest.TestCase):
 
         self.assertEqual((101, 102, 103, 104, 105), results)
         version.assert_called_once_with(project)
-        check.assert_called_once_with(project, "check-id", DEFAULT_GATE)
+        check.assert_called_once_with(project, "check-id", DEFAULT_GATE, "parallel")
         mutation.assert_called_once_with(project, "mutation-id", DEFAULT_GATE)
         local_crap.assert_called_once_with(project, "local-id", DEFAULT_GATE)
         strict_crap.assert_called_once_with(project, "strict-id", DEFAULT_GATE)

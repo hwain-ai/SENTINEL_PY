@@ -9,6 +9,7 @@ temporary log, never to this process's stdout.
 
 import json
 import subprocess
+import signal
 import sys
 import tempfile
 from pathlib import Path
@@ -23,6 +24,7 @@ STATUS_BY_EXIT = {
     5: "dependencyError",
     6: "backendError",
     7: "evidenceError",
+    8: "cancelled",
 }
 IDENTITY_KEYS = ("protocolVersion", "requestId", "command", "moduleId", "language")
 
@@ -52,6 +54,10 @@ def main() -> int:
     ):
         return finish(3)
     gate = request.get("gate") or {}
+    execution_mode = request.get("executionMode", "parallel")
+    if execution_mode not in ("parallel", "sequential"):
+        return finish(3)
+    response["executionMode"] = execution_mode
     # The cross-platform launcher is Python; run it with this interpreter so no PATH lookup is involved.
     launcher = home / "scripts" / "toolchain.py"
     with tempfile.TemporaryDirectory(prefix="sentinel-tool-python-") as directory:
@@ -60,6 +66,7 @@ def main() -> int:
             sys.executable, "-I", "-B", str(launcher), "run", "sentinel-py", "check", "--strict",
             "--project", request["projectRoot"],
             "--format", "json", "--output", str(result_file),
+            "--execution-mode", execution_mode,
         ]
         if request.get("config"):
             command += ["--config", request["config"]]
@@ -74,14 +81,25 @@ def main() -> int:
                 command += [option, value]
         with open(Path(directory) / "checker.log", "wb") as log:
             try:
-                completed = subprocess.run(
+                process = subprocess.Popen(
                     command,
                     cwd=request["projectRoot"],
                     stdin=subprocess.DEVNULL,
                     stdout=log,
                     stderr=log,
-                    check=False,
                 )
+                try:
+                    process.wait()
+                except KeyboardInterrupt:
+                    process.send_signal(signal.SIGINT)
+                    try:
+                        process.wait(timeout=25)
+                    except subprocess.TimeoutExpired:
+                        process.kill()
+                        process.wait()
+                        return finish(6)
+                    return finish(8)
+                completed = process
             except OSError:
                 return finish(5)
         if completed.returncode not in (0, 2):

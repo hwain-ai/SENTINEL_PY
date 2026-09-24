@@ -24,6 +24,8 @@ from .mutation import MutantRecord, evaluate_mutation_gate
 from .selection import selected_metrics
 from .rendering import render_canonical_decimal
 from .runner import run_fresh_coverage, run_mutmut
+from .runner.parallel import run_pair, ParallelExecutionError
+from .runner.mutation_backend import _protected_inventory, MutationBackendError
 
 
 class DependencyFailure(RuntimeError):
@@ -150,16 +152,29 @@ def run_strict_check(
     project: LoadedProject,
     correlation_id: str | None,
     thresholds: GateThresholds = DEFAULT_GATE,
+    execution_mode: str = "parallel",
 ) -> tuple[int, dict]:
     """Run fresh CRAP and mutation gates and commit exactly one combined run."""
 
     run_id = str(uuid.uuid4())
     correlation = _correlation_id(correlation_id, run_id)
-    coverage_execution = run_fresh_coverage(project)
-    report = load_coverage_json(coverage_execution.report)
-    metrics = _measure_sources(coverage_execution.sources, report, thresholds)
+    def coverage():
+        measured = run_fresh_coverage(project)
+        return dict(measured.sources), measured.report
+
+    before = _protected_inventory(project.project_root)
+    try:
+        (sources, coverage_report), mutation_execution = run_pair(
+            coverage, lambda: run_mutmut(project), execution_mode,
+        )
+    except ParallelExecutionError as error:
+        raise MutationBackendError(error.code) from error
+    finally:
+        if before != _protected_inventory(project.project_root):
+            raise MutationBackendError("protectedSourceChanged")
+    report = load_coverage_json(coverage_report)
+    metrics = _measure_sources(sources, report, thresholds)
     crap_gate = evaluate_crap_gate(selected_metrics(project, metrics), thresholds.crap_max)
-    mutation_execution = run_mutmut(project)
     mutation_gate = evaluate_mutation_gate(
         mutation_execution.candidate_ids,
         mutation_execution.records,

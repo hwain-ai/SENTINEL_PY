@@ -19,6 +19,31 @@ sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
     "real backend acceptance is verified before self-mutant execution",
 )
 class CheckCommandTests(unittest.TestCase):
+    def test_both_modes_use_project_dependencies_and_return_equal_measurements(self):
+        from sentinel_py.cli import main
+        with tempfile.TemporaryDirectory(prefix="sentinel-py-project-dependency-") as directory:
+            project = Path(directory)
+            self._write_project(project)
+            package = project / ".sentinel-deps" / "project_helper"
+            package.mkdir(parents=True)
+            (package / "__init__.py").write_text("EXPECTED = 2\n")
+            test = project / "tests/test_subject.py"
+            test.write_text("from app.subject import add_one\nfrom project_helper import EXPECTED\n"
+                            "def test_add_one():\n    assert add_one(1) == EXPECTED\n")
+            source = project / "app/subject.py"
+            original = source.read_bytes()
+            measurements = []
+            for mode in ("parallel", "sequential"):
+                output, errors = io.StringIO(), io.StringIO()
+                with contextlib.redirect_stdout(output), contextlib.redirect_stderr(errors):
+                    code = main(["check", "--project", str(project), "--execution-mode", mode, "--format", "json"])
+                self.assertEqual(code, 0, errors.getvalue())
+                document = json.loads(output.getvalue())
+                measurements.append((document["crap"], document["mutation"]))
+                self.assertEqual(source.read_bytes(), original)
+                self.assertEqual((package / "__init__.py").read_text(), "EXPECTED = 2\n")
+            self.assertEqual(*measurements)
+
     def test_strict_check_commits_crap_and_mutation_as_one_run(self):
         from sentinel_py.cli import main
 

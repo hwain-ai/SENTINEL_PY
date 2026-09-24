@@ -69,6 +69,8 @@ def _add_quality_command(
     parser.add_argument("--file", action="append", default=[])
     parser.add_argument("--function", action="append", default=[])
     parser.add_argument("--tests", action="append", default=[])
+    if command == "check":
+        parser.add_argument("--execution-mode", choices=("parallel", "sequential"), default="parallel")
 
 
 def _add_version_command(subparsers: argparse._SubParsersAction) -> None:
@@ -106,6 +108,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     arguments = build_parser().parse_args(argv)
     try:
         return _dispatch(arguments)
+    except KeyboardInterrupt:
+        return _emit_error(arguments, 8, "checkCancelled", "cancelled")
     except (UsageConfigError, GateInputError) as error:
         return _emit_error(arguments, USAGE_CONFIG_ERROR, error.code, "usageConfigError")
     except (
@@ -171,7 +175,7 @@ def _dispatch_project_command(
     if arguments.command == "version":
         return _emit_result(arguments, 0, version_result(project))
     if arguments.command == "check":
-        exit_code, result = run_strict_check(project, arguments.correlation_id, gate)
+        exit_code, result = run_strict_check(project, arguments.correlation_id, gate, arguments.execution_mode)
         result["scope"] = scope_result(project)
         return _emit_result(arguments, exit_code, result)
     if arguments.command == "mutation":
