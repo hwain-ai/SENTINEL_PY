@@ -50,4 +50,4 @@ sentinel-tool/setup.sh
 
 문서와 개발 안내는 [문서 목록](docs/index.md)에 있습니다.
 
-통합 실행기에 연결하는 어댑터 버전은 `0.1.4`이다. [sentinel-tool/version](sentinel-tool/version)과 설치한 실행기의 승인 목록을 함께 확인한다. 기존 설치의 갱신은 [통합 실행기 갱신 안내](https://github.com/hwain-ai/SENTINEL#승인된-도구-버전-갱신)를 따른다.
+통합 실행기에 연결하는 어댑터 버전은 `0.1.5`이다. [sentinel-tool/version](sentinel-tool/version)과 설치한 실행기의 승인 목록을 함께 확인한다. 기존 설치의 갱신은 [통합 실행기 갱신 안내](https://github.com/hwain-ai/SENTINEL#승인된-도구-버전-갱신)를 따른다. 이 버전은 기본 병렬 실행과 `--execution-mode sequential` 선택을 지원한다.
